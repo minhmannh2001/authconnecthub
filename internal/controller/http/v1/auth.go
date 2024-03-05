@@ -1,0 +1,221 @@
+package v1
+
+import (
+	"fmt"
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+	"github.com/minhmannh2001/authconnecthub/internal/dto"
+	"github.com/minhmannh2001/authconnecthub/internal/entity"
+	"github.com/minhmannh2001/authconnecthub/internal/helper"
+	"github.com/minhmannh2001/authconnecthub/internal/usecase"
+	"github.com/minhmannh2001/authconnecthub/pkg/logger"
+	"golang.org/x/crypto/bcrypt"
+)
+
+type authRoutes struct {
+	l logger.Interface
+	a usecase.Auth
+	u usecase.User
+	r usecase.Role
+}
+
+func NewAuthenticationRoutes(handler *gin.RouterGroup,
+	l logger.Interface,
+	a usecase.Auth,
+	u usecase.User,
+	r usecase.Role,
+) {
+	ar := &authRoutes{l, a, u, r}
+
+	h := handler.Group("/auth")
+	{
+		h.GET("/login", func(c *gin.Context) {
+			queryParams := c.Request.URL.Query()
+
+			toastMessage := helper.ExtractQueryParam(queryParams, "toast-message", "")
+			toastType := helper.ExtractQueryParam(queryParams, "toast-type", "")
+			hashValue := helper.ExtractQueryParam(queryParams, "hash-value", "")
+
+			isValid := helper.IsMapValid(map[string]interface{}{
+				"toast-message": toastMessage,
+				"toast-type":    toastType,
+			}, hashValue)
+
+			toastSettings := map[string]interface{}{
+				"hidden":  !isValid, // Toggle based on validity
+				"type":    toastType,
+				"message": helper.FormatToastMessage(toastMessage),
+			}
+
+			c.HTML(http.StatusOK, "login.html", gin.H{
+				"title":         "AuthConnect Hub",
+				"toastSettings": toastSettings,
+			})
+		})
+
+		h.GET("/register", func(c *gin.Context) {
+			c.HTML(http.StatusOK, "register.html", gin.H{
+				"title": "AuthConnect Hub",
+				"toastSettings": map[string]interface{}{
+					"hidden": true,
+				},
+			})
+		})
+		h.POST("/register", ar.register)
+	}
+}
+
+func (ar *authRoutes) register(c *gin.Context) {
+	var registerRequestBody dto.RegisterRequestBody
+
+	// validate json
+	err := c.ShouldBind(&registerRequestBody)
+	// validation errors
+	if err != nil {
+		// generate validation errors response
+		validationMap := helper.GenerateValidationMap(err)
+		_ = validationMap
+
+		c.HTML(http.StatusBadRequest, "toast-section", gin.H{
+			"hidden":  false,
+			"type":    dto.ToastTypeDanger,
+			"message": "Failed to create user.",
+		})
+
+		inputData := map[string]string{
+			"username":        registerRequestBody.Username,
+			"email":           registerRequestBody.Email,
+			"password":        registerRequestBody.Password,
+			"confirmPassword": registerRequestBody.ConfirmPassword,
+		}
+
+		c.HTML(http.StatusOK, "register-form", gin.H{
+			"inputData":      inputData,
+			"validationFail": true,
+			"validationMap":  validationMap,
+		})
+
+		return
+	}
+
+	encryptedPassword, err := bcrypt.GenerateFromPassword(
+		[]byte(registerRequestBody.Password),
+		bcrypt.DefaultCost,
+	)
+	if err != nil {
+		ar.l.Error(err)
+		c.HTML(http.StatusBadRequest, "toast-section", gin.H{
+			"hidden":  false,
+			"type":    dto.ToastTypeDanger,
+			"message": "Password hashing failed due to an internal error. Please try again later.",
+		})
+
+		inputData := map[string]string{
+			"username":        registerRequestBody.Username,
+			"email":           registerRequestBody.Email,
+			"password":        registerRequestBody.Password,
+			"confirmPassword": registerRequestBody.ConfirmPassword,
+		}
+
+		c.HTML(http.StatusOK, "register-form", gin.H{
+			"inputData":      inputData,
+			"validationFail": true,
+			"validationMap":  map[string]string{},
+		})
+		return
+	}
+
+	roleID, err := ar.r.GetRoleIDByName("customer")
+
+	if err != nil {
+		ar.l.Error(err)
+		c.HTML(http.StatusBadRequest, "toast-section", gin.H{
+			"hidden":  false,
+			"type":    dto.ToastTypeDanger,
+			"message": "Failed to create user due to an internal error. Please try again later.",
+		})
+
+		inputData := map[string]string{
+			"username":        registerRequestBody.Username,
+			"email":           registerRequestBody.Email,
+			"password":        registerRequestBody.Password,
+			"confirmPassword": registerRequestBody.ConfirmPassword,
+		}
+
+		c.HTML(http.StatusOK, "register-form", gin.H{
+			"inputData":      inputData,
+			"validationFail": true,
+			"validationMap":  map[string]string{},
+		})
+		return
+	}
+
+	user := entity.User{
+		Username: registerRequestBody.Username,
+		Email:    registerRequestBody.Email,
+		Password: string(encryptedPassword),
+		RoleID:   roleID,
+	}
+
+	_, err = ar.u.Create(user)
+
+	if err != nil {
+
+		if helper.IsErrOfType(err, &entity.ErrDuplicateUser{}) {
+			c.HTML(http.StatusBadRequest, "toast-section", gin.H{
+				"hidden":  false,
+				"type":    dto.ToastTypeDanger,
+				"message": err.Error(),
+			})
+
+			c.HTML(http.StatusOK, "register-form", gin.H{
+				"inputData":      map[string]string{},
+				"validationFail": false,
+				"validationMap":  map[string]string{},
+			})
+			return
+		}
+
+		ar.l.Error(err)
+		c.HTML(http.StatusBadRequest, "toast-section", gin.H{
+			"hidden":  false,
+			"type":    dto.ToastTypeDanger,
+			"message": "Failed to create user.",
+		})
+
+		inputData := map[string]string{
+			"username":        registerRequestBody.Username,
+			"email":           registerRequestBody.Email,
+			"password":        registerRequestBody.Password,
+			"confirmPassword": registerRequestBody.ConfirmPassword,
+		}
+
+		c.HTML(http.StatusOK, "register-form", gin.H{
+			"inputData":      inputData,
+			"validationFail": true,
+			"validationMap":  map[string]string{},
+		})
+		return
+	}
+
+	cfg := helper.GetConfig(c)
+	accessToken, _ := ar.a.CreateAccessToken(user, cfg.Authen.AccessTokenTtl)
+	refreshToken, _ := ar.a.CreateRefreshToken(user, accessToken, cfg.Authen.RefreshTokenTtl)
+
+	hashValue, err := helper.HashMap(map[string]interface{}{
+		"toast-message": "user-registered-successfully",
+		"toast-type":    dto.ToastTypeSuccess,
+	})
+	if err != nil {
+		ar.l.Error(err)
+	}
+	HXTriggerEvents, _ := helper.MapToJSONString(map[string]interface{}{
+		"saveToken": map[string]interface{}{
+			"accessToken":  accessToken,
+			"refreshToken": refreshToken,
+		},
+	})
+	c.Header("HX-Trigger", HXTriggerEvents)
+	c.Header("HX-Redirect", fmt.Sprintf("/?toast-message=user-registered-successfully&toast-type=%s&hash-value=%s", dto.ToastTypeSuccess, hashValue))
+}

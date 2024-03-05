@@ -1,0 +1,28 @@
+</body>
+<script>
+    function loadFromLocalStorage(key) {
+        try {
+            return localStorage.getItem(key);
+        } catch (error) {
+            console.error("Error retrieving from local storage:", error);
+            return null;
+        }
+    }
+    document.body.addEventListener('htmx:beforeSwap', function(evt) {
+        // Allow 422 and 400 responses to swap
+        // We treat these as form validation errors
+        if (evt.detail.xhr.status === 422 || evt.detail.xhr.status === 400) {
+            evt.detail.shouldSwap = true;
+            evt.detail.isError = false;
+        }
+    });
+    document.body.addEventListener('saveToken', function(evt) {
+        localStorage.setItem("accessToken", evt.detail.accessToken)
+        localStorage.setItem("refreshToken", evt.detail.refreshToken)
+    });
+    document.body.addEventListener('htmx:configRequest', function(evt) {
+        const jwtToken = loadFromLocalStorage("jwtToken");
+        evt.detail.headers["Authorization"] = "Bearer " + jwtToken;
+    });
+</script>
+</html>

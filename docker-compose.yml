@@ -1,0 +1,51 @@
+version: '3.5'
+
+services:
+  postgres:
+    container_name: postgres_container
+    image: postgres:15.5-bullseye
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-minhmannh2001}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-123456aA@}
+      POSTGRES_DB: ${POSTGRES_DB:-accesscontroldb}
+      PGDATA: /data/postgres
+    volumes:
+       - postgres:/data/postgres
+    ports:
+      - "5432:5432"
+    networks:
+      - authconnecthub
+    restart: unless-stopped
+  
+  pgadmin:
+    container_name: pgadmin_container
+    image: elestio/pgadmin:REL-8_2
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-nguyenminhmannh2001@gmail.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-123456aA@}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    volumes:
+       - pgadmin:/var/lib/pgadmin
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    networks:
+      - authconnecthub
+    restart: unless-stopped
+
+  redis:
+    image: redis:7.2.4
+    restart: always
+    ports:
+      - '6379:6379'
+    command: redis-server --save 20 1 --loglevel warning --requirepass eYVX7EwVmmxKPCDmwMtyKVge8oLd2t81
+    volumes: 
+      - redis:/data
+  
+networks:
+  authconnecthub:
+    driver: bridge
+
+volumes:
+    postgres:
+    pgadmin:
+    redis:

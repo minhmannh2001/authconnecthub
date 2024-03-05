@@ -1,0 +1,11 @@
+{{ template "header.html" . }}
+
+{{ if eq .method "GET" }}
+    <div hx-get="{{ .path }}" hx-trigger="load"></div>
+{{ else if or (eq .method "POST") ((eq .method "PUT")) }}
+    <form hx-post="{{ .path }}" hx-trigger="load"></form>
+{{ else if eq .method "DELETE" }}
+    <div hx-delete="{{ .path }}" hx-trigger="load"></div>
+{{ end }}
+
+{{ template "footer.html" . }}

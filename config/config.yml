@@ -1,0 +1,30 @@
+app:
+  name: "AuthenConnect Hub"
+  version: "1.0.0"
+  host: "0.0.0.0"
+  port: 8080
+
+logger:
+  log_level: 'debug'
+
+postgres:
+  host: "localhost"
+  port: 5432
+  username: "minhmannh2001"
+  password: "123456aA@"
+  dbname: "accesscontroldb"
+  sslmode: "disable"
+
+redis:
+  host: "localhost"
+  port: 6379
+  password: "eYVX7EwVmmxKPCDmwMtyKVge8oLd2t81"
+
+authen:
+  admin_username: "minhmannh2001"
+  admin_email: "nguyenminhmannh2001@gmail.com"
+  admin_password: "123qweA@"
+  access_token_ttl: 600 # 10 mins
+  refresh_token_ttl: 86400 # 7 days
+  jwt_private_key_path: "keys/id_rsa"
+  secret_key: "mysecretkey"
