@@ -49,7 +49,7 @@ func (r *UserRepo) FindByUsernameOrEmail(username, email string) (*entity.User, 
 	err := r.Conn.Where("username = ? OR email = ?", username, email).First(&user).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, nil // User not found
+			return nil, &entity.InvalidCredentialsError{} // User not found
 		}
 		return nil, err
 	}

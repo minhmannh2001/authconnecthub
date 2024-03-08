@@ -31,3 +31,15 @@ type RoleNotFoundError struct {
 func (e *RoleNotFoundError) Error() string {
 	return fmt.Sprintf("Role with name '%s' not found", e.Name)
 }
+
+type InvalidCredentialsError struct{}
+
+func (e *InvalidCredentialsError) Error() string {
+	return "Invalid credentials. Please try again."
+}
+
+type InternalServerError struct{}
+
+func (e *InternalServerError) Error() string {
+	return "An unexpected error occurred. Please try again later."
+}

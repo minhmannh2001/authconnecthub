@@ -53,6 +53,7 @@ func NewAuthenticationRoutes(handler *gin.RouterGroup,
 				"toastSettings": toastSettings,
 			})
 		})
+		h.POST("/login", ar.login)
 
 		h.GET("/register", func(c *gin.Context) {
 			c.HTML(http.StatusOK, "register.html", gin.H{
@@ -63,6 +64,15 @@ func NewAuthenticationRoutes(handler *gin.RouterGroup,
 			})
 		})
 		h.POST("/register", ar.register)
+
+		h.GET("/logout", func(c *gin.Context) {
+			c.HTML(http.StatusOK, "register.html", gin.H{
+				"title": "AuthConnect Hub",
+				"toastSettings": map[string]interface{}{
+					"hidden": true,
+				},
+			})
+		})
 	}
 }
 
@@ -218,4 +228,90 @@ func (ar *authRoutes) register(c *gin.Context) {
 	})
 	c.Header("HX-Trigger", HXTriggerEvents)
 	c.Header("HX-Redirect", fmt.Sprintf("/?toast-message=user-registered-successfully&toast-type=%s&hash-value=%s", dto.ToastTypeSuccess, hashValue))
+}
+
+func (ar *authRoutes) login(c *gin.Context) {
+	var loginRequestBody dto.LoginRequestBody
+
+	if err := c.ShouldBind(&loginRequestBody); err != nil {
+		ar.l.Error(err)
+		// generate validation errors response
+		validationMap := helper.GenerateValidationMap(err)
+		_ = validationMap
+
+		c.HTML(http.StatusBadRequest, "toast-section", gin.H{
+			"hidden":  false,
+			"type":    dto.ToastTypeDanger,
+			"message": "Invalid credentials. Please try again.",
+		})
+
+		inputData := map[string]string{
+			"username": loginRequestBody.Username,
+			"password": loginRequestBody.Password,
+		}
+
+		c.HTML(http.StatusOK, "login-form", gin.H{
+			"inputData":      inputData,
+			"validationFail": true,
+			"validationMap":  validationMap,
+		})
+
+		return
+	}
+
+	jwt_tokens, err := ar.a.Login(c, loginRequestBody)
+	if err != nil {
+		inputData := map[string]string{
+			"username": loginRequestBody.Username,
+			"password": loginRequestBody.Password,
+		}
+
+		if helper.IsErrOfType(err, &entity.InvalidCredentialsError{}) {
+			c.HTML(http.StatusBadRequest, "toast-section", gin.H{
+				"hidden":  false,
+				"type":    dto.ToastTypeDanger,
+				"message": err.Error(),
+			})
+
+			c.HTML(http.StatusOK, "login-form", gin.H{
+				"inputData":      inputData,
+				"validationFail": false,
+				"validationMap":  map[string]string{},
+			})
+			return
+		} else {
+			c.HTML(http.StatusBadRequest, "toast-section", gin.H{
+				"hidden":  false,
+				"type":    dto.ToastTypeDanger,
+				"message": "An unexpected error occurred. Please try again later.",
+			})
+
+			c.HTML(http.StatusOK, "login-form", gin.H{
+				"inputData":      inputData,
+				"validationFail": false,
+				"validationMap":  map[string]string{},
+			})
+			return
+		}
+	}
+
+	HXTriggerEvents, err := helper.MapToJSONString(map[string]interface{}{
+		"saveToken": map[string]interface{}{
+			"accessToken":  jwt_tokens.AccessToken,
+			"refreshToken": jwt_tokens.RefreshToken,
+		},
+	})
+	if err != nil {
+		ar.l.Error(err)
+	}
+
+	hashValue, err := helper.HashMap(map[string]interface{}{
+		"toast-message": "login-successfully",
+		"toast-type":    dto.ToastTypeSuccess,
+	})
+	if err != nil {
+		ar.l.Error(err)
+	}
+	c.Header("HX-Trigger", HXTriggerEvents)
+	c.Header("HX-Redirect", fmt.Sprintf("/?toast-message=login-successfully&toast-type=%s&hash-value=%s", dto.ToastTypeSuccess, hashValue))
 }

@@ -1,15 +1,19 @@
 package usecase
 
 import (
+	"github.com/gin-gonic/gin"
+	"github.com/minhmannh2001/authconnecthub/internal/dto"
 	"github.com/minhmannh2001/authconnecthub/internal/entity"
 )
 
 type (
 	Auth interface {
+		Login(*gin.Context, dto.LoginRequestBody) (*dto.JwtTokens, error)
 		Register()
 		CreateAccessToken(entity.User, int) (string, error)
 		CreateRefreshToken(entity.User, string, int) (string, error)
 		ValidateToken(string) (string, error)
+		RetrieveJtiFromAccessToken(string) (string, error)
 	}
 	AuthRepo interface {
 	}

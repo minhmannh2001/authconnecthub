@@ -4,7 +4,7 @@
       <label for="username" class="block mb-2 text-sm font-medium text-gray-900">Username</label>
       <input type="text" {{ if .validationFail }} value="{{.inputData.username}}" {{ end }} name="username" id="username" class="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5" required="">
       {{ if and .validationFail .validationMap.username }}
-      <p id="username_validation_msg" class="mt-2 -mb-4 text-sm text-red-600 dark:text-red-500">.validationMap.username</p>
+      <p id="username_validation_msg" class="mt-2 -mb-4 text-sm text-red-600 dark:text-red-500">{{.validationMap.username}}</p>
       {{ end }}
   </div>
     <div>

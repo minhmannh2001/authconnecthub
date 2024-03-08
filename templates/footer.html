@@ -21,7 +21,7 @@
         localStorage.setItem("refreshToken", evt.detail.refreshToken)
     });
     document.body.addEventListener('htmx:configRequest', function(evt) {
-        const jwtToken = loadFromLocalStorage("jwtToken");
+        const jwtToken = loadFromLocalStorage("accessToken");
         evt.detail.headers["Authorization"] = "Bearer " + jwtToken;
     });
 </script>

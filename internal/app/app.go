@@ -43,9 +43,9 @@ func Run(cfg *config.Config) {
 	roleRepo := repo.NewRoleRepo(pg)
 
 	// Use case
-	authUseCase := usecase.NewAuthUseCase(authRepo, cfg.JwtPrivateKey)
-	userUseCase := usecase.NewUserUseCase(userRepo)
 	roleUseCase := usecase.NewRoleUseCase(roleRepo)
+	userUseCase := usecase.NewUserUseCase(userRepo)
+	authUseCase := usecase.NewAuthUseCase(authRepo, *userUseCase, cfg.JwtPrivateKey)
 
 	// HTTP Server
 	handler := gin.New()
@@ -55,6 +55,7 @@ func Run(cfg *config.Config) {
 		c.Set("config", cfg)
 		c.Next()
 	})
+	handler.Use(middleware.IsLoggedIn(authUseCase))
 	handler.Use(middleware.IsAuthorized(authUseCase))
 
 	router.NewRouter(handler, l, authUseCase, userUseCase, roleUseCase)
