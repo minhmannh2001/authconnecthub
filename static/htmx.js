@@ -1448,12 +1448,12 @@ var htmx_min = { exports: {} };
           var Cn = ee(gn, "formmethod");
           Cn != null && Cn.toLowerCase() !== "dialog" && (ze = Cn);
         }
-        var On = ne(Jr, "hx-confirm");
+        var Rn = ne(Jr, "hx-confirm");
         if (Wr === void 0) {
           var In = function(vn) {
             return he(ze, Qr, Jr, Zr, Gr, !!vn);
-          }, Rn = { target: nn, elt: Jr, path: Qr, verb: ze, triggeringEvent: Zr, etc: Gr, issueRequest: In, question: On };
-          if (ce(Jr, "htmx:confirm", Rn) === !1)
+          }, On = { target: nn, elt: Jr, path: Qr, verb: ze, triggeringEvent: Zr, etc: Gr, issueRequest: In, question: Rn };
+          if (ce(Jr, "htmx:confirm", On) === !1)
             return ie(Yr), en;
         }
         var Sn = Jr, mn = ne(Jr, "hx-sync"), pn = null, Fn = !1;
@@ -1504,7 +1504,7 @@ var htmx_min = { exports: {} };
           if (Tn === null || !ce(Jr, "htmx:prompt", { prompt: Tn, target: nn }))
             return ie(Yr), dn(), en;
         }
-        if (On && !Wr && !confirm(On))
+        if (Rn && !Wr && !confirm(Rn))
           return ie(Yr), dn(), en;
         var sn = xr(Jr, nn, Tn);
         ze !== "get" && !Sr(Jr) && (sn["Content-Type"] = "application/x-www-form-urlencoded"), Gr.headers && (sn = le(sn, Gr.headers));
@@ -1606,7 +1606,7 @@ var htmx_min = { exports: {} };
               O(Jr, /HX-Reswap:/i) && (Cn = Jr.getResponseHeader("HX-Reswap"));
               var Kr = wr(ze, Cn);
               Kr.hasOwnProperty("ignoreTitle") && (gn = Kr.ignoreTitle), Zr.classList.add(Q.config.swappingClass);
-              var On = null, In = null, Rn = function() {
+              var Rn = null, In = null, On = function() {
                 try {
                   var hn = document.activeElement, un = {};
                   try {
@@ -1650,7 +1650,7 @@ var htmx_min = { exports: {} };
                       var En = ze;
                       se(ze) || (En = re().body), _e(Jr, "HX-Trigger-After-Settle", En);
                     }
-                    ie(On);
+                    ie(Rn);
                   };
                   Kr.settleDelay > 0 ? setTimeout(Tn, Kr.settleDelay) : Tn();
                 } catch (sn) {
@@ -1659,15 +1659,15 @@ var htmx_min = { exports: {} };
               }, Sn = Q.config.globalViewTransitions;
               if (Kr.hasOwnProperty("transition") && (Sn = Kr.transition), Sn && ce(ze, "htmx:beforeTransition", Qr) && typeof Promise < "u" && document.startViewTransition) {
                 var mn = new Promise(function(hn, un) {
-                  On = hn, In = un;
-                }), pn = Rn;
-                Rn = function() {
+                  Rn = hn, In = un;
+                }), pn = On;
+                On = function() {
                   document.startViewTransition(function() {
                     return pn(), mn;
                   });
                 };
               }
-              Kr.swapDelay > 0 ? setTimeout(Rn, Kr.swapDelay) : Rn();
+              Kr.swapDelay > 0 ? setTimeout(On, Kr.swapDelay) : On();
             }
             on && fe(ze, "htmx:responseError", le({ error: "Response Status Error Code " + Jr.status + " from " + Qr.pathInfo.requestPath }, Qr));
           }
@@ -1753,3 +1753,6 @@ var htmx_min = { exports: {} };
 var htmx_minExports = htmx_min.exports;
 const htmx = /* @__PURE__ */ getDefaultExportFromCjs(htmx_minExports);
 window.htmx = htmx;
+htmx.on("htmx:beforeSend", function(ze) {
+  ze.detail.xhr.setRequestHeader("HX-Request", "true");
+});

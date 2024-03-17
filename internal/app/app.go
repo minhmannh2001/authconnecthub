@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/minhmannh2001/authconnecthub/config"
 	router "github.com/minhmannh2001/authconnecthub/internal/controller/http"
+	"github.com/minhmannh2001/authconnecthub/internal/helper"
 	"github.com/minhmannh2001/authconnecthub/internal/middleware"
 	"github.com/minhmannh2001/authconnecthub/internal/usecase"
 	"github.com/minhmannh2001/authconnecthub/internal/usecase/repo"
@@ -50,11 +51,17 @@ func Run(cfg *config.Config) {
 	// HTTP Server
 	handler := gin.New()
 
+	_, err = helper.GetSwaggerInfo(cfg.App.SwaggerPath)
+	if err != nil {
+		panic(err)
+	}
+
 	// Middlewares
 	handler.Use(func(c *gin.Context) {
 		c.Set("config", cfg)
 		c.Next()
 	})
+	handler.Use(middleware.IsHtmxRequest)
 	handler.Use(middleware.IsLoggedIn(authUseCase))
 	handler.Use(middleware.IsAuthorized(authUseCase))
 

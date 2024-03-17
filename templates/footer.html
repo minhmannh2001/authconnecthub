@@ -1,4 +1,5 @@
-</body>
+{{ if .reload }}
+{{ else }}
 <script>
     function loadFromLocalStorage(key) {
         try {
@@ -9,9 +10,8 @@
         }
     }
     document.body.addEventListener('htmx:beforeSwap', function(evt) {
-        // Allow 422 and 400 responses to swap
-        // We treat these as form validation errors
-        if (evt.detail.xhr.status === 422 || evt.detail.xhr.status === 400) {
+        // Allow 422, 400, 500 responses to swap
+        if (evt.detail.xhr.status === 422 || evt.detail.xhr.status === 400 || evt.detail.xhr.status === 500) {
             evt.detail.shouldSwap = true;
             evt.detail.isError = false;
         }
@@ -20,9 +20,20 @@
         localStorage.setItem("accessToken", evt.detail.accessToken)
         localStorage.setItem("refreshToken", evt.detail.refreshToken)
     });
+    document.body.addEventListener('deleteToken', function(evt) {
+        localStorage.removeItem("accessToken")
+        localStorage.removeItem("refreshToken")
+    });
     document.body.addEventListener('htmx:configRequest', function(evt) {
-        const jwtToken = loadFromLocalStorage("accessToken");
-        evt.detail.headers["Authorization"] = "Bearer " + jwtToken;
+        const accessToken = loadFromLocalStorage("accessToken");
+        evt.detail.headers["Authorization"] = "Bearer " + accessToken;
+        const refreshToken = loadFromLocalStorage("refreshToken");
+        evt.detail.headers["Refresh"] = "Bearer " + refreshToken;
+        {{ if .reloadHeader }}
+        evt.detail.headers["HX-Reload"] = "true";
+        {{ end }}
     });
 </script>
+</body>
 </html>
+{{ end }}

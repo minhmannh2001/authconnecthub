@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/url"
+	"strings"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/minhmannh2001/authconnecthub/config"
@@ -104,4 +105,8 @@ func ExtractQueryParam(queryParams url.Values, key, defaultValue string) string 
 		return defaultValue
 	}
 	return value[0]
+}
+
+func IsTokenExpired(err error) bool {
+	return err != nil && strings.Contains(err.Error(), "expired")
 }

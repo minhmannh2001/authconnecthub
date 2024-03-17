@@ -1,13 +1,25 @@
 {{ define "toast-section" }}
-<div id="toast-section" hx-swap-oob="true" class="{{ if .hidden }} hidden {{ else }} {{ end }} absolute top-4 flex flex-col items-center w-full">
-    {{ if eq .type "success" }} 
-        {{ template "toast-success" . }}
-    {{ else if eq .type "danger" }}
-        {{ template "toast-danger" . }}
-    {{ else if eq .type "warning" }}
-        {{ template "toast-warning" . }}
+<div id="toast-section" {{ if .reload }} {{ else }} hx-swap-oob="true" {{ end }} class="{{ if .toastSettings.hidden }} hidden {{ else }} {{ end }} absolute top-4 flex flex-col items-center w-full">
+    {{ if .toastSettings }}
+        {{ if eq .toastSettings.type "success" }} 
+            {{ template "toast-success" .toastSettings }}
+        {{ else if eq .toastSettings.type "danger" }}
+            {{ template "toast-danger" .toastSettings }}
+        {{ else if eq .toastSettings.type "warning" }}
+            {{ template "toast-warning" .toastSettings }}
+        {{ else }}
+            <!-- Empty content to avoid sending request /close-toast repeatedly -->
+        {{ end }}
     {{ else }}
-    <!-- Empty content to avoid sending request /close-toast repeatedly -->
+        {{ if eq .type "success" }} 
+            {{ template "toast-success" . }}
+        {{ else if eq .type "danger" }}
+            {{ template "toast-danger" . }}
+        {{ else if eq .type "warning" }}
+            {{ template "toast-warning" . }}
+        {{ else }}
+            <!-- Empty content to avoid sending request /close-toast repeatedly -->
+        {{ end }}
     {{ end }}
 </div>
 {{ end }}

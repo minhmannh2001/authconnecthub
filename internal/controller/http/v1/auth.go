@@ -11,6 +11,8 @@ import (
 	"github.com/minhmannh2001/authconnecthub/internal/usecase"
 	"github.com/minhmannh2001/authconnecthub/pkg/logger"
 	"golang.org/x/crypto/bcrypt"
+
+	_ "github.com/minhmannh2001/authconnecthub/docs"
 )
 
 type authRoutes struct {
@@ -20,7 +22,7 @@ type authRoutes struct {
 	r usecase.Role
 }
 
-func NewAuthenticationRoutes(handler *gin.RouterGroup,
+func NewAuthenRoutes(handler *gin.RouterGroup,
 	l logger.Interface,
 	a usecase.Auth,
 	u usecase.User,
@@ -30,30 +32,8 @@ func NewAuthenticationRoutes(handler *gin.RouterGroup,
 
 	h := handler.Group("/auth")
 	{
-		h.GET("/login", func(c *gin.Context) {
-			queryParams := c.Request.URL.Query()
-
-			toastMessage := helper.ExtractQueryParam(queryParams, "toast-message", "")
-			toastType := helper.ExtractQueryParam(queryParams, "toast-type", "")
-			hashValue := helper.ExtractQueryParam(queryParams, "hash-value", "")
-
-			isValid := helper.IsMapValid(map[string]interface{}{
-				"toast-message": toastMessage,
-				"toast-type":    toastType,
-			}, hashValue)
-
-			toastSettings := map[string]interface{}{
-				"hidden":  !isValid, // Toggle based on validity
-				"type":    toastType,
-				"message": helper.FormatToastMessage(toastMessage),
-			}
-
-			c.HTML(http.StatusOK, "login.html", gin.H{
-				"title":         "AuthConnect Hub",
-				"toastSettings": toastSettings,
-			})
-		})
-		h.POST("/login", ar.login)
+		h.GET("/login", ar.getLogin)
+		h.POST("/login", ar.postLogin)
 
 		h.GET("/register", func(c *gin.Context) {
 			c.HTML(http.StatusOK, "register.html", gin.H{
@@ -74,6 +54,40 @@ func NewAuthenticationRoutes(handler *gin.RouterGroup,
 			})
 		})
 	}
+}
+
+// @Summary Login Page
+// @Description This endpoint renders the login page and displays a toast notification if provided query parameters are valid.
+// @Tags Authen
+// @Accept json
+// @Produce html
+// @Param toast-message query string false "The message to display in the toast notification.""
+// @Param toast-type query string false "The type of the toast notification (e.g., success, error).""
+// @Param hash-value query string false "A hash value used for validation."
+// @router /v1/auth/login [GET]
+func (ar *authRoutes) getLogin(c *gin.Context) {
+	queryParams := c.Request.URL.Query()
+
+	toastMessage := helper.ExtractQueryParam(queryParams, "toast-message", "")
+	toastType := helper.ExtractQueryParam(queryParams, "toast-type", "")
+	hashValue := helper.ExtractQueryParam(queryParams, "hash-value", "")
+
+	isValid := helper.IsMapValid(map[string]interface{}{
+		"toast-message": toastMessage,
+		"toast-type":    toastType,
+	}, hashValue)
+
+	toastSettings := map[string]interface{}{
+		"hidden":  !isValid, // Toggle based on validity
+		"type":    toastType,
+		"message": helper.FormatToastMessage(toastMessage),
+	}
+
+	c.HTML(http.StatusOK, "login.html", gin.H{
+		"title":         "AuthConnect Hub",
+		"toastSettings": toastSettings,
+		"reload":        c.GetHeader("HX-Reload"),
+	})
 }
 
 func (ar *authRoutes) register(c *gin.Context) {
@@ -230,7 +244,7 @@ func (ar *authRoutes) register(c *gin.Context) {
 	c.Header("HX-Redirect", fmt.Sprintf("/?toast-message=user-registered-successfully&toast-type=%s&hash-value=%s", dto.ToastTypeSuccess, hashValue))
 }
 
-func (ar *authRoutes) login(c *gin.Context) {
+func (ar *authRoutes) postLogin(c *gin.Context) {
 	var loginRequestBody dto.LoginRequestBody
 
 	if err := c.ShouldBind(&loginRequestBody); err != nil {
@@ -275,7 +289,7 @@ func (ar *authRoutes) login(c *gin.Context) {
 
 			c.HTML(http.StatusOK, "login-form", gin.H{
 				"inputData":      inputData,
-				"validationFail": false,
+				"validationFail": true,
 				"validationMap":  map[string]string{},
 			})
 			return
@@ -288,7 +302,7 @@ func (ar *authRoutes) login(c *gin.Context) {
 
 			c.HTML(http.StatusOK, "login-form", gin.H{
 				"inputData":      inputData,
-				"validationFail": false,
+				"validationFail": true,
 				"validationMap":  map[string]string{},
 			})
 			return

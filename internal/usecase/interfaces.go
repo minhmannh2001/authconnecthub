@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/minhmannh2001/authconnecthub/config"
 	"github.com/minhmannh2001/authconnecthub/internal/dto"
 	"github.com/minhmannh2001/authconnecthub/internal/entity"
 )
@@ -13,7 +14,10 @@ type (
 		CreateAccessToken(entity.User, int) (string, error)
 		CreateRefreshToken(entity.User, string, int) (string, error)
 		ValidateToken(string) (string, error)
-		RetrieveJtiFromAccessToken(string) (string, error)
+		RetrieveJtiFromAccessToken(string, bool) (string, error)
+		RetrieveAccessTokenJtiFromRefreshToken(string) (string, error)
+		IsRefreshTokenValidForAccessToken(string, string) (bool, error)
+		CheckAndRefreshTokens(string, string, *config.Config) (string, string, error)
 	}
 	AuthRepo interface {
 	}

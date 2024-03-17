@@ -21,10 +21,11 @@ type (
 	}
 
 	App struct {
-		Name    string `env-required:"true" yaml:"name"    env:"APP_NAME"`
-		Version string `env-required:"true" yaml:"version" env:"APP_VERSION"`
-		Host    string `env-required:"true" yaml:"host"    env:"APP_HOST"`
-		Port    string `env-required:"true" yaml:"port"    env:"APP_PORT"`
+		Name        string `env-required:"true" yaml:"name"         env:"APP_NAME"`
+		Version     string `env-required:"true" yaml:"version"      env:"APP_VERSION"`
+		Host        string `env-required:"true" yaml:"host"         env:"APP_HOST"`
+		Port        string `env-required:"true" yaml:"port"         env:"APP_PORT"`
+		SwaggerPath string `env-required:"true" yaml:"swagger_path" env:"SWAGGER_PATH"`
 	}
 
 	Log struct {

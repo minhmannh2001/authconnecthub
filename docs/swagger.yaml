@@ -1,0 +1,86 @@
+basePath: /v1
+host: localhost:8080
+info:
+  contact:
+    email: nguyenminhmannh2001@gmail.com
+    name: Nguyen Minh Manh
+  description: A centralized authentication hub for my home applications in Go using
+    Gin framework.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  title: AuthConnect Hub
+  version: "1.0"
+paths:
+  /:
+    get:
+      consumes:
+      - application/json
+      description: This endpoint renders the index.html page with potential toast
+        notification settings based on query parameters and validation.
+      parameters:
+      - description: Message to display in the toast notification
+        in: query
+        name: toast-message
+        type: string
+      - description: Type of the toast notification (e.g., success, error)
+        in: query
+        name: toast-type
+        type: string
+      - description: Hash value used for validation (optional)
+        in: query
+        name: hash-value
+        type: string
+      produces:
+      - text/html
+      responses: {}
+      summary: Get Index Page
+      tags:
+      - index
+  /private:
+    get:
+      description: This endpoint is accessible only to authorized users and returns
+        a greeting message.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      security:
+      - JWT: []
+      summary: Access a private resource
+      tags:
+      - private
+  /v1/auth/login:
+    get:
+      consumes:
+      - application/json
+      description: This endpoint renders the login page and displays a toast notification
+        if provided query parameters are valid.
+      parameters:
+      - description: The message to display in the toast notification.
+        in: query
+        name: toast-message
+        type: string
+      - description: The type of the toast notification (e.g., success, error).
+        in: query
+        name: toast-type
+        type: string
+      - description: A hash value used for validation.
+        in: query
+        name: hash-value
+        type: string
+      produces:
+      - text/html
+      responses: {}
+      summary: Login Page
+      tags:
+      - Authen
+securityDefinitions:
+  JWT:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

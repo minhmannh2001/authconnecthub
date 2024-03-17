@@ -74,7 +74,7 @@ func (au *AuthUseCase) CreateAccessToken(user entity.User, expireTime int) (stri
 		"iss": "AuthConnect Hub",
 		"sub": user.Username,
 		"aud": "users",
-		"exp": time.Now().Add(time.Hour * time.Duration(expireTime)).Unix(),
+		"exp": time.Now().Add(time.Second * time.Duration(expireTime)).Unix(),
 		"nbf": time.Now().Unix(),
 		"iat": time.Now().Unix(),
 		"jti": uuid.NewString(),
@@ -98,7 +98,7 @@ func (au *AuthUseCase) CreateRefreshToken(user entity.User, accessToken string, 
 		return "", errors.New("invalid expiration time")
 	}
 
-	accessTokenJti, err := au.RetrieveJtiFromAccessToken(accessToken)
+	accessTokenJti, err := au.RetrieveJtiFromAccessToken(accessToken, true)
 	if err != nil {
 		return "", err
 	}
@@ -107,7 +107,7 @@ func (au *AuthUseCase) CreateRefreshToken(user entity.User, accessToken string, 
 		"iss":              "AuthConnect Hub",
 		"sub":              user.Username,
 		"aud":              "users",
-		"exp":              time.Now().Add(time.Hour * time.Duration(expireTime)).Unix(),
+		"exp":              time.Now().Add(time.Second * time.Duration(expireTime)).Unix(),
 		"nbf":              time.Now().Unix(),
 		"iat":              time.Now().Unix(),
 		"jti":              uuid.NewString(),
@@ -151,7 +151,45 @@ func (au *AuthUseCase) ValidateToken(jwtToken string) (string, error) {
 	return username, nil
 }
 
-func (au *AuthUseCase) RetrieveJtiFromAccessToken(jwtToken string) (string, error) {
+func (au *AuthUseCase) RetrieveJtiFromAccessToken(jwtToken string, validate bool) (string, error) {
+	var token *jwt.Token
+	var err error
+
+	if validate {
+		// Parse with validation
+		token, err = jwt.Parse(jwtToken, func(token *jwt.Token) (interface{}, error) {
+			if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
+				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+			}
+			return au.privateKey.Public(), nil
+		})
+	} else {
+		// Parse without validation
+		token, _ = jwt.Parse(jwtToken, nil)
+	}
+	if err != nil {
+		return "", err
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return "", errors.New("invalid token format (not a MapClaims)")
+	}
+
+	jti, ok := claims["jti"].(string)
+	if !ok {
+		return "", errors.New("missing 'jti' claim in token")
+	}
+
+	// Check validity only if validation was requested
+	if validate && !token.Valid {
+		return "", errors.New("invalid token")
+	}
+
+	return jti, nil
+}
+
+func (au *AuthUseCase) RetrieveAccessTokenJtiFromRefreshToken(jwtToken string) (string, error) {
 	token, err := jwt.Parse(jwtToken, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
@@ -163,12 +201,54 @@ func (au *AuthUseCase) RetrieveJtiFromAccessToken(jwtToken string) (string, erro
 	}
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		jti, ok := claims["jti"].(string)
+		jti, ok := claims["access_token_jti"].(string)
 		if !ok {
-			return "", errors.New("missing 'jti' claim in token")
+			return "", errors.New("missing 'access_token_jti' claim in token")
 		}
 		return jti, nil
 	} else {
 		return "", errors.New("invalid token")
 	}
+}
+
+func (au *AuthUseCase) IsRefreshTokenValidForAccessToken(accessToken string, refreshToken string) (bool, error) {
+	accessTokenJti, err := au.RetrieveJtiFromAccessToken(accessToken, false)
+	if err != nil {
+		return false, err // Error retrieving JTI from access token
+	}
+
+	refreshTokenAccessTokenJti, err := au.RetrieveAccessTokenJtiFromRefreshToken(refreshToken)
+	if err != nil {
+		return false, err // Error retrieving access token JTI from refresh token
+	}
+
+	// Compare the JTI values
+	return accessTokenJti == refreshTokenAccessTokenJti, nil
+}
+
+func (au *AuthUseCase) CheckAndRefreshTokens(oldAccessToken string, oldRefreshToken string, cfg *config.Config) (string, string, error) {
+	username, err := au.ValidateToken(oldRefreshToken)
+	if err != nil {
+		return "", "", err // Invalid refresh token
+	}
+
+	valid, err := au.IsRefreshTokenValidForAccessToken(oldAccessToken, oldRefreshToken)
+	if !valid {
+		return "", "", err
+	}
+
+	user := entity.User{Username: username}
+
+	// Create new access token
+	newAccessToken, err := au.CreateAccessToken(user, cfg.Authen.AccessTokenTtl)
+	if err != nil {
+		return "", "", err
+	}
+
+	newRefreshToken, err := au.CreateRefreshToken(user, newAccessToken, cfg.Authen.RefreshTokenTtl)
+	if err != nil {
+		return "", "", err
+	}
+
+	return newAccessToken, newRefreshToken, nil
 }
