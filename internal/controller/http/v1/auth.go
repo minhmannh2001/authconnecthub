@@ -37,7 +37,7 @@ func NewAuthenRoutes(handler *gin.RouterGroup,
 
 		h.GET("/register", func(c *gin.Context) {
 			c.HTML(http.StatusOK, "register.html", gin.H{
-				"title": "AuthConnect Hub",
+				"title": "Personal Hub",
 				"toastSettings": map[string]interface{}{
 					"hidden": true,
 				},
@@ -45,14 +45,7 @@ func NewAuthenRoutes(handler *gin.RouterGroup,
 		})
 		h.POST("/register", ar.register)
 
-		h.GET("/logout", func(c *gin.Context) {
-			c.HTML(http.StatusOK, "register.html", gin.H{
-				"title": "AuthConnect Hub",
-				"toastSettings": map[string]interface{}{
-					"hidden": true,
-				},
-			})
-		})
+		h.GET("/logout", ar.LogoutHandler)
 	}
 }
 
@@ -84,7 +77,7 @@ func (ar *authRoutes) getLogin(c *gin.Context) {
 	}
 
 	c.HTML(http.StatusOK, "login.html", gin.H{
-		"title":         "AuthConnect Hub",
+		"title":         "Personal Hub",
 		"toastSettings": toastSettings,
 		"reload":        c.GetHeader("HX-Reload"),
 	})
@@ -276,8 +269,9 @@ func (ar *authRoutes) postLogin(c *gin.Context) {
 	jwt_tokens, err := ar.a.Login(c, loginRequestBody)
 	if err != nil {
 		inputData := map[string]string{
-			"username": loginRequestBody.Username,
-			"password": loginRequestBody.Password,
+			"username":    loginRequestBody.Username,
+			"password":    loginRequestBody.Password,
+			"remember_me": loginRequestBody.RememberMe,
 		}
 
 		if helper.IsErrOfType(err, &entity.InvalidCredentialsError{}) {
@@ -309,8 +303,14 @@ func (ar *authRoutes) postLogin(c *gin.Context) {
 		}
 	}
 
+	saveTo := "session"
+	if loginRequestBody.RememberMe == "on" {
+		saveTo = "local"
+	}
+
 	HXTriggerEvents, err := helper.MapToJSONString(map[string]interface{}{
 		"saveToken": map[string]interface{}{
+			"saveTo":       saveTo,
 			"accessToken":  jwt_tokens.AccessToken,
 			"refreshToken": jwt_tokens.RefreshToken,
 		},
@@ -328,4 +328,27 @@ func (ar *authRoutes) postLogin(c *gin.Context) {
 	}
 	c.Header("HX-Trigger", HXTriggerEvents)
 	c.Header("HX-Redirect", fmt.Sprintf("/?toast-message=login-successfully&toast-type=%s&hash-value=%s", dto.ToastTypeSuccess, hashValue))
+}
+
+// @Summary Logout User
+// @Description Logs out the currently authenticated user and redirects to the home page with a success toast notification.
+// @Tags Authen
+// @Security JWT
+// @Router /v1/auth/logout [GET]
+func (ar *authRoutes) LogoutHandler(c *gin.Context) {
+	err := ar.a.Logout(c)
+	if err != nil {
+		helper.HandleInternalError(c, err)
+		return
+	}
+
+	hashValue, err := helper.HashMap(map[string]interface{}{
+		"toast-message": "logout-successfully",
+		"toast-type":    dto.ToastTypeSuccess,
+	})
+	if err != nil {
+		helper.HandleInternalError(c, err)
+		return
+	}
+	c.Header("HX-Redirect", fmt.Sprintf("/?toast-message=logout-successfully&toast-type=%s&hash-value=%s", dto.ToastTypeSuccess, hashValue))
 }

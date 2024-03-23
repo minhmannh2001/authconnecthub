@@ -1,9 +1,17 @@
+<script>
+    document.title = "{{ .title }}";
+</script>
 {{ if .reload }}
 {{ else }}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
 <script>
-    function loadFromLocalStorage(key) {
+    function loadFromStorage(key) {
         try {
-            return localStorage.getItem(key);
+            if (sessionStorage.getItem(key) != null) {
+                return sessionStorage.getItem(key);
+            } else {
+                return localStorage.getItem(key);
+            }
         } catch (error) {
             console.error("Error retrieving from local storage:", error);
             return null;
@@ -17,17 +25,29 @@
         }
     });
     document.body.addEventListener('saveToken', function(evt) {
-        localStorage.setItem("accessToken", evt.detail.accessToken)
-        localStorage.setItem("refreshToken", evt.detail.refreshToken)
+        const saveTo = evt.detail.saveTo
+        if (saveTo == "local") {
+            localStorage.setItem("accessToken", evt.detail.accessToken)
+            localStorage.setItem("refreshToken", evt.detail.refreshToken)
+        } else {
+            sessionStorage.setItem("accessToken", evt.detail.accessToken)
+            sessionStorage.setItem("refreshToken", evt.detail.refreshToken)
+        }
     });
     document.body.addEventListener('deleteToken', function(evt) {
-        localStorage.removeItem("accessToken")
-        localStorage.removeItem("refreshToken")
+        const deleteFrom = evt.detail.deleteFrom
+        if (deleteFrom == "local") {
+            localStorage.removeItem("accessToken")
+            localStorage.removeItem("refreshToken")
+        } else {
+            sessionStorage.removeItem("accessToken")
+            sessionStorage.removeItem("refreshToken")
+        }
     });
     document.body.addEventListener('htmx:configRequest', function(evt) {
-        const accessToken = loadFromLocalStorage("accessToken");
+        const accessToken = loadFromStorage("accessToken");
         evt.detail.headers["Authorization"] = "Bearer " + accessToken;
-        const refreshToken = loadFromLocalStorage("refreshToken");
+        const refreshToken = loadFromStorage("refreshToken");
         evt.detail.headers["Refresh"] = "Bearer " + refreshToken;
         {{ if .reloadHeader }}
         evt.detail.headers["HX-Reload"] = "true";

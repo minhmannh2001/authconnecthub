@@ -31,7 +31,7 @@ func NewAuthenticationRoutes(handler *gin.RouterGroup,
 	{
 		h.GET("/register", func(c *gin.Context) {
 			c.HTML(http.StatusOK, "register.html", gin.H{
-				"Title": "AuthConnect Hub",
+				"title": "Personal Hub",
 			})
 		})
 		h.POST("/register", ar.register)

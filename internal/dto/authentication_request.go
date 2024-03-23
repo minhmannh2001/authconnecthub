@@ -1,8 +1,9 @@
 package dto
 
 type LoginRequestBody struct {
-	Username string `json:"username" form:"username" binding:"required"`
-	Password string `json:"password" form:"password" binding:"required,min=8"`
+	Username   string `json:"username"    form:"username" binding:"required"`
+	Password   string `json:"password"    form:"password" binding:"required,min=8"`
+	RememberMe string `json:"remember_me" form:"remember_me"`
 }
 
 type RegisterRequestBody struct {

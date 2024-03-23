@@ -14,12 +14,15 @@ type (
 		CreateAccessToken(entity.User, int) (string, error)
 		CreateRefreshToken(entity.User, string, int) (string, error)
 		ValidateToken(string) (string, error)
-		RetrieveJtiFromAccessToken(string, bool) (string, error)
-		RetrieveAccessTokenJtiFromRefreshToken(string) (string, error)
+		RetrieveFieldFromJwtToken(string, string, bool) (interface{}, error)
 		IsRefreshTokenValidForAccessToken(string, string) (bool, error)
 		CheckAndRefreshTokens(string, string, *config.Config) (string, string, error)
+		Logout(c *gin.Context) error
+		IsTokenBlacklisted(string) (bool, error)
 	}
 	AuthRepo interface {
+		BlacklistToken(string, int) error
+		IsTokenBlacklisted(string) (bool, error)
 	}
 
 	User interface {

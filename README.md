@@ -1,0 +1,1 @@
+swag init -d ./cmd/app/,./internal/controller/http/v1/,./internal/controller/http/

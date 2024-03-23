@@ -12,6 +12,7 @@ import (
 	"github.com/minhmannh2001/authconnecthub/config"
 	"github.com/minhmannh2001/authconnecthub/internal/dto"
 	"github.com/minhmannh2001/authconnecthub/internal/entity"
+	"github.com/minhmannh2001/authconnecthub/internal/helper"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -33,6 +34,10 @@ func (au *AuthUseCase) Login(c *gin.Context, requestBody dto.LoginRequestBody) (
 	user, err := au.userUseCase.userRepo.FindByUsernameOrEmail(requestBody.Username, "")
 	if err != nil {
 		return nil, err
+	}
+
+	if requestBody.RememberMe == "on" {
+		user.RememberMe = true
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(requestBody.Password)); err != nil {
@@ -71,13 +76,14 @@ func (au *AuthUseCase) CreateAccessToken(user entity.User, expireTime int) (stri
 	}
 
 	claims := jwt.MapClaims{
-		"iss": "AuthConnect Hub",
-		"sub": user.Username,
-		"aud": "users",
-		"exp": time.Now().Add(time.Second * time.Duration(expireTime)).Unix(),
-		"nbf": time.Now().Unix(),
-		"iat": time.Now().Unix(),
-		"jti": uuid.NewString(),
+		"iss":         "AuthConnect Hub",
+		"sub":         user.Username,
+		"remember_me": user.RememberMe,
+		"aud":         "users",
+		"exp":         time.Now().Add(time.Second * time.Duration(expireTime)).Unix(),
+		"nbf":         time.Now().Unix(),
+		"iat":         time.Now().Unix(),
+		"jti":         uuid.NewString(),
 	}
 
 	if au.privateKey == nil {
@@ -98,7 +104,7 @@ func (au *AuthUseCase) CreateRefreshToken(user entity.User, accessToken string, 
 		return "", errors.New("invalid expiration time")
 	}
 
-	accessTokenJti, err := au.RetrieveJtiFromAccessToken(accessToken, true)
+	accessTokenJti, err := au.RetrieveFieldFromJwtToken(accessToken, "jti", true)
 	if err != nil {
 		return "", err
 	}
@@ -111,7 +117,7 @@ func (au *AuthUseCase) CreateRefreshToken(user entity.User, accessToken string, 
 		"nbf":              time.Now().Unix(),
 		"iat":              time.Now().Unix(),
 		"jti":              uuid.NewString(),
-		"access_token_jti": accessTokenJti,
+		"access_token_jti": accessTokenJti.(string),
 	}
 
 	if au.privateKey == nil {
@@ -151,7 +157,50 @@ func (au *AuthUseCase) ValidateToken(jwtToken string) (string, error) {
 	return username, nil
 }
 
-func (au *AuthUseCase) RetrieveJtiFromAccessToken(jwtToken string, validate bool) (string, error) {
+func (au *AuthUseCase) IsRefreshTokenValidForAccessToken(accessToken string, refreshToken string) (bool, error) {
+	accessTokenJti, err := au.RetrieveFieldFromJwtToken(accessToken, "jti", false)
+	if err != nil {
+		return false, err // Error retrieving JTI from access token
+	}
+
+	refreshTokenAccessTokenJti, err := au.RetrieveFieldFromJwtToken(refreshToken, "access_token_jti", true)
+	if err != nil {
+		return false, err // Error retrieving access token JTI from refresh token
+	}
+
+	// Compare the JTI values
+	return accessTokenJti.(string) == refreshTokenAccessTokenJti.(string), nil
+}
+
+func (au *AuthUseCase) CheckAndRefreshTokens(oldAccessToken string, oldRefreshToken string, cfg *config.Config) (string, string, error) {
+	username, err := au.ValidateToken(oldRefreshToken)
+	if err != nil {
+		return "", "", err // Invalid refresh token
+	}
+
+	valid, err := au.IsRefreshTokenValidForAccessToken(oldAccessToken, oldRefreshToken)
+	if !valid {
+		return "", "", err
+	}
+
+	rememberMe, _ := au.RetrieveFieldFromJwtToken(oldAccessToken, "remember_me", false)
+	user := entity.User{Username: username, RememberMe: rememberMe.(bool)}
+
+	// Create new access token
+	newAccessToken, err := au.CreateAccessToken(user, cfg.Authen.AccessTokenTtl)
+	if err != nil {
+		return "", "", err
+	}
+
+	newRefreshToken, err := au.CreateRefreshToken(user, newAccessToken, cfg.Authen.RefreshTokenTtl)
+	if err != nil {
+		return "", "", err
+	}
+
+	return newAccessToken, newRefreshToken, nil
+}
+
+func (au *AuthUseCase) RetrieveFieldFromJwtToken(jwtToken string, fieldName string, validate bool) (interface{}, error) {
 	var token *jwt.Token
 	var err error
 
@@ -168,87 +217,58 @@ func (au *AuthUseCase) RetrieveJtiFromAccessToken(jwtToken string, validate bool
 		token, _ = jwt.Parse(jwtToken, nil)
 	}
 	if err != nil {
-		return "", err
+		return nil, err
+	}
+
+	// When provided token is invalid and we can't parse it
+	if token == nil {
+		return nil, errors.New("invalid token (not a valid jwt token created by this app)")
 	}
 
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok {
-		return "", errors.New("invalid token format (not a MapClaims)")
+		return nil, errors.New("invalid token format (not a MapClaims)")
 	}
 
-	jti, ok := claims["jti"].(string)
-	if !ok {
-		return "", errors.New("missing 'jti' claim in token")
+	fieldValue, exists := claims[fieldName]
+	if !exists {
+		return nil, fmt.Errorf("missing '%s' claim in token", fieldName)
 	}
 
 	// Check validity only if validation was requested
 	if validate && !token.Valid {
-		return "", errors.New("invalid token")
+		return nil, errors.New("invalid token")
 	}
 
-	return jti, nil
+	return fieldValue, nil
 }
 
-func (au *AuthUseCase) RetrieveAccessTokenJtiFromRefreshToken(jwtToken string) (string, error) {
-	token, err := jwt.Parse(jwtToken, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-		}
-		return au.privateKey.Public(), nil
-	})
+func (au *AuthUseCase) Logout(c *gin.Context) error {
+	accessToken := helper.ExtractHeaderToken(c, helper.AccessTokenHeader)
+	refreshToken := helper.ExtractHeaderToken(c, helper.RefreshTokenHeader)
+
+	cfg := helper.GetConfig(c)
+	err := au.authRepo.BlacklistToken(accessToken, cfg.Authen.AccessTokenTtl)
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		jti, ok := claims["access_token_jti"].(string)
-		if !ok {
-			return "", errors.New("missing 'access_token_jti' claim in token")
-		}
-		return jti, nil
-	} else {
-		return "", errors.New("invalid token")
+	err = au.authRepo.BlacklistToken(refreshToken, cfg.Authen.RefreshTokenTtl)
+	if err != nil {
+		return err
 	}
+
+	// when token is expired, we still process the same
+	rememberMe, err := au.RetrieveFieldFromJwtToken(accessToken, "remember_me", false)
+	if err != nil {
+		return err
+	}
+
+	helper.DeleteTokens(c, rememberMe.(bool))
+
+	return nil
 }
 
-func (au *AuthUseCase) IsRefreshTokenValidForAccessToken(accessToken string, refreshToken string) (bool, error) {
-	accessTokenJti, err := au.RetrieveJtiFromAccessToken(accessToken, false)
-	if err != nil {
-		return false, err // Error retrieving JTI from access token
-	}
-
-	refreshTokenAccessTokenJti, err := au.RetrieveAccessTokenJtiFromRefreshToken(refreshToken)
-	if err != nil {
-		return false, err // Error retrieving access token JTI from refresh token
-	}
-
-	// Compare the JTI values
-	return accessTokenJti == refreshTokenAccessTokenJti, nil
-}
-
-func (au *AuthUseCase) CheckAndRefreshTokens(oldAccessToken string, oldRefreshToken string, cfg *config.Config) (string, string, error) {
-	username, err := au.ValidateToken(oldRefreshToken)
-	if err != nil {
-		return "", "", err // Invalid refresh token
-	}
-
-	valid, err := au.IsRefreshTokenValidForAccessToken(oldAccessToken, oldRefreshToken)
-	if !valid {
-		return "", "", err
-	}
-
-	user := entity.User{Username: username}
-
-	// Create new access token
-	newAccessToken, err := au.CreateAccessToken(user, cfg.Authen.AccessTokenTtl)
-	if err != nil {
-		return "", "", err
-	}
-
-	newRefreshToken, err := au.CreateRefreshToken(user, newAccessToken, cfg.Authen.RefreshTokenTtl)
-	if err != nil {
-		return "", "", err
-	}
-
-	return newAccessToken, newRefreshToken, nil
+func (au *AuthUseCase) IsTokenBlacklisted(token string) (bool, error) {
+	return au.authRepo.IsTokenBlacklisted(token)
 }

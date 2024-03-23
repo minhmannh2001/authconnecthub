@@ -118,6 +118,21 @@ const docTemplate = `{
                 ],
                 "responses": {}
             }
+        },
+        "/v1/auth/logout": {
+            "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Logs out the currently authenticated user and redirects to the home page with a success toast notification.",
+                "tags": [
+                    "Authen"
+                ],
+                "summary": "Logout User",
+                "responses": {}
+            }
         }
     },
     "securityDefinitions": {

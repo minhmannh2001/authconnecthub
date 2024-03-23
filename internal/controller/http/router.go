@@ -45,29 +45,7 @@ func (h *HTTP) Start(e *gin.Engine) {
 }
 
 func (h *HTTP) registerRoutes(e *gin.Engine) {
-	e.GET("/", func(c *gin.Context) {
-		queryParams := c.Request.URL.Query()
-
-		toastMessage := helper.ExtractQueryParam(queryParams, "toast-message", "")
-		toastType := helper.ExtractQueryParam(queryParams, "toast-type", "")
-		hashValue := helper.ExtractQueryParam(queryParams, "hash-value", "")
-
-		isValid := helper.IsMapValid(map[string]interface{}{
-			"toast-message": toastMessage,
-			"toast-type":    toastType,
-		}, hashValue)
-
-		toastSettings := map[string]interface{}{
-			"hidden":  !isValid, // Toggle based on validity
-			"type":    toastType,
-			"message": helper.FormatToastMessage(toastMessage),
-		}
-
-		c.HTML(http.StatusOK, "index.html", gin.H{
-			"title":         "AuthConnect Hub",
-			"toastSettings": toastSettings,
-		})
-	})
+	e.GET("/", homeHandler)
 
 	e.PUT("/show-toast", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "toast-section", gin.H{
@@ -90,6 +68,49 @@ func (h *HTTP) registerRoutes(e *gin.Engine) {
 	{
 		v1.NewAuthenRoutes(groupRouter, h.logger, h.authUC, h.userUC, h.roleUC)
 	}
+}
+
+// @Summary Home Page
+// @Description This endpoint renders the home page of the application.
+// It accepts optional query parameters for toast notifications and validates them with a hash value.
+// @Tags home
+// @Produce html
+// @Param toast-message query string false "Toast message to display"
+// @Param toast-type query string false "Type of toast notification (e.g., success, error)"
+// @Param hash-value query string false "Hash value for validation"
+// @Success 200 {object} object Response object containing HTML data
+// @Router / [GET]
+func homeHandler(c *gin.Context) {
+	queryParams := c.Request.URL.Query()
+
+	toastMessage := helper.ExtractQueryParam(queryParams, "toast-message", "")
+	toastType := helper.ExtractQueryParam(queryParams, "toast-type", "")
+	hashValue := helper.ExtractQueryParam(queryParams, "hash-value", "")
+
+	isValid := helper.IsMapValid(map[string]interface{}{
+		"toast-message": toastMessage,
+		"toast-type":    toastType,
+	}, hashValue)
+
+	toastSettings := map[string]interface{}{
+		"hidden":  !isValid, // Toggle based on validity
+		"type":    toastType,
+		"message": helper.FormatToastMessage(toastMessage),
+	}
+
+	userInfo := map[string]interface{}{}
+	username, ok := c.Get("username")
+
+	if ok {
+		userInfo["username"] = username
+	}
+
+	c.HTML(http.StatusOK, "index.html", gin.H{
+		"title":         "Personal Hub",
+		"toastSettings": toastSettings,
+		"reload":        c.GetHeader("HX-Reload"),
+		"userInfo":      userInfo,
+	})
 }
 
 // @Summary Access a private resource
@@ -127,30 +148,7 @@ func NewRouter(handler *gin.Engine, l logger.Interface, a usecase.Auth, u usecas
 	handler.NoRoute(handleNotFound)
 	handler.NoMethod(handleNoMethod)
 
-	handler.GET("/", func(c *gin.Context) {
-		queryParams := c.Request.URL.Query()
-
-		toastMessage := helper.ExtractQueryParam(queryParams, "toast-message", "")
-		toastType := helper.ExtractQueryParam(queryParams, "toast-type", "")
-		hashValue := helper.ExtractQueryParam(queryParams, "hash-value", "")
-
-		isValid := helper.IsMapValid(map[string]interface{}{
-			"toast-message": toastMessage,
-			"toast-type":    toastType,
-		}, hashValue)
-
-		toastSettings := map[string]interface{}{
-			"hidden":  !isValid, // Toggle based on validity
-			"type":    toastType,
-			"message": helper.FormatToastMessage(toastMessage),
-		}
-
-		c.HTML(http.StatusOK, "index.html", gin.H{
-			"title":         "AuthConnect Hub",
-			"toastSettings": toastSettings,
-			"reload":        c.GetHeader("HX-Reload"),
-		})
-	})
+	handler.GET("/", homeHandler)
 
 	handler.PUT("/show-toast", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "toast-section", gin.H{
@@ -179,7 +177,7 @@ func NewRouter(handler *gin.Engine, l logger.Interface, a usecase.Auth, u usecas
 
 func handleInternalServerError(c *gin.Context) {
 	c.HTML(http.StatusInternalServerError, "500.html", gin.H{
-		"title": "AuthConnect Hub",
+		"title": "Personal Hub",
 		"toastSettings": map[string]interface{}{
 			"hidden": true,
 		},
@@ -188,7 +186,7 @@ func handleInternalServerError(c *gin.Context) {
 
 func handleNotFound(c *gin.Context) {
 	c.HTML(http.StatusNotFound, "404.html", gin.H{
-		"title": "AuthConnect Hub",
+		"title": "Personal Hub",
 		"toastSettings": map[string]interface{}{
 			"hidden": true,
 		},
@@ -197,7 +195,7 @@ func handleNotFound(c *gin.Context) {
 
 func handleNoMethod(c *gin.Context) {
 	c.HTML(http.StatusNotFound, "405.html", gin.H{
-		"title": "AuthConnect Hub",
+		"title": "Personal Hub",
 		"toastSettings": map[string]interface{}{
 			"hidden": true,
 		},

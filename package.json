@@ -21,6 +21,7 @@
     "vite": "^5.1.4"
   },
   "dependencies": {
+    "flowbite": "^2.3.0",
     "htmx.org": "^1.9.10"
   }
 }

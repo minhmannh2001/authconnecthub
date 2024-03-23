@@ -78,6 +78,16 @@ paths:
       summary: Login Page
       tags:
       - Authen
+  /v1/auth/logout:
+    get:
+      description: Logs out the currently authenticated user and redirects to the
+        home page with a success toast notification.
+      responses: {}
+      security:
+      - JWT: []
+      summary: Logout User
+      tags:
+      - Authen
 securityDefinitions:
   JWT:
     in: header

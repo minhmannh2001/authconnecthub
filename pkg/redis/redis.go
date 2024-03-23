@@ -2,16 +2,14 @@ package redis
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"time"
 
 	"github.com/minhmannh2001/authconnecthub/config"
 	"github.com/redis/go-redis/v9"
 )
 
 type Redis struct {
-	client *redis.Client
+	Client *redis.Client
 }
 
 func New(cfg config.Config, opts ...Option) (*Redis, error) {
@@ -28,19 +26,8 @@ func New(cfg config.Config, opts ...Option) (*Redis, error) {
 	}
 
 	return &Redis{
-		client: client,
+		Client: client,
 	}, nil
-}
-
-func (r *Redis) Set(key string, value interface{}, ttl int) error {
-	ctx := context.Background()
-	// Set the key-value pair with the specified TTL
-	err := r.client.Set(ctx, key, value, time.Duration(ttl)*time.Second).Err()
-	if err != nil {
-		return errors.New("failed to set key-value pair: " + err.Error())
-	}
-
-	return nil
 }
 
 func ping(client *redis.Client) error {
