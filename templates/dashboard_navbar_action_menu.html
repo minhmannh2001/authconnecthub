@@ -1,0 +1,25 @@
+<div class="flex items-center ml-3">
+    <div>
+      <button type="button" class="flex text-sm bg-gray-800 rounded-full focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600" id="user-menu-button-2" aria-expanded="false" data-dropdown-toggle="dropdown-2">
+        <span class="sr-only">Open user menu</span>
+        <img class="w-8 h-8 rounded-full" src="/static/logos/launch-64px.png" alt="user photo">
+      </button>
+    </div>
+    <!-- Dropdown menu -->
+    <div class="z-50 w-44 hidden my-4 text-base list-none bg-white divide-y divide-gray-100 rounded shadow dark:bg-gray-700 dark:divide-gray-600" id="dropdown-2">
+      <ul class="py-1 text-sm text-gray-700" aria-labelledby="dropdownInformdropdownAvatarNameButtonationButton">
+        <li>
+          <a href="/v1/dashboard" class="block px-4 py-2 hover:bg-gray-100">Dashboard</a>
+        </li>
+        <li>
+          <a href="#" class="block px-4 py-2 hover:bg-gray-100">My Profile</a>
+        </li>
+        <li>
+          <a href="#" class="block px-4 py-2 hover:bg-gray-100">Settings</a>
+        </li>
+      </ul>
+      <div class="py-1">
+        <a href="/v1/auth/logout" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Log out</a>
+      </div>
+    </div>
+</div>

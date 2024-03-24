@@ -172,6 +172,7 @@ func NewRouter(handler *gin.Engine, l logger.Interface, a usecase.Auth, u usecas
 	h := handler.Group("/v1")
 	{
 		v1.NewAuthenRoutes(h, l, a, u, r)
+		h.GET("/dashboard", dashboardHandler)
 	}
 }
 
@@ -199,5 +200,15 @@ func handleNoMethod(c *gin.Context) {
 		"toastSettings": map[string]interface{}{
 			"hidden": true,
 		},
+	})
+}
+
+func dashboardHandler(c *gin.Context) {
+	c.HTML(http.StatusOK, "dashboard.html", gin.H{
+		"title": "Personal Hub",
+		"toastSettings": map[string]interface{}{
+			"hidden": true,
+		},
+		"reload": c.GetHeader("HX-Reload"),
 	})
 }
