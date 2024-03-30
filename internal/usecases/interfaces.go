@@ -1,4 +1,4 @@
-package usecase
+package usecases
 
 import (
 	"github.com/gin-gonic/gin"
@@ -8,7 +8,7 @@ import (
 )
 
 type (
-	Auth interface {
+	IAuthUC interface {
 		Login(*gin.Context, dto.LoginRequestBody) (*dto.JwtTokens, error)
 		Register()
 		CreateAccessToken(entity.User, int) (string, error)
@@ -20,27 +20,13 @@ type (
 		Logout(c *gin.Context) error
 		IsTokenBlacklisted(string) (bool, error)
 	}
-	AuthRepo interface {
-		BlacklistToken(string, int) error
-		IsTokenBlacklisted(string) (bool, error)
-	}
 
-	User interface {
+	IUserUC interface {
 		Create(entity.User) (entity.User, error)
 		FindByUsernameOrEmail(string, string) (*entity.User, error)
 	}
-	UserRepo interface {
-		Create(entity.User) (entity.User, error)
-		RetrieveByID(uint) (entity.User, error)
-		Update(entity.User) (entity.User, error)
-		Delete(entity.User) (entity.User, error)
-		FindByUsernameOrEmail(string, string) (*entity.User, error)
-	}
 
-	Role interface {
-		GetRoleIDByName(string) (uint, error)
-	}
-	RoleRepo interface {
+	IRoleUC interface {
 		GetRoleIDByName(string) (uint, error)
 	}
 )

@@ -1,14 +1,15 @@
-package usecase
+package usecases
 
 import (
 	"github.com/minhmannh2001/authconnecthub/internal/entity"
+	"github.com/minhmannh2001/authconnecthub/internal/usecases/repos"
 )
 
 type UserUseCase struct {
-	userRepo UserRepo
+	userRepo repos.IUserRepo
 }
 
-func NewUserUseCase(ur UserRepo) *UserUseCase {
+func NewUserUseCase(ur repos.IUserRepo) *UserUseCase {
 	return &UserUseCase{userRepo: ur}
 }
 

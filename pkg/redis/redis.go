@@ -12,7 +12,7 @@ type Redis struct {
 	Client *redis.Client
 }
 
-func New(cfg config.Config, opts ...Option) (*Redis, error) {
+func New(cfg *config.Config, opts ...Option) (*Redis, error) {
 	client := redis.NewClient(&redis.Options{
 		Addr:     fmt.Sprintf("%s:%s", cfg.Redis.Host, cfg.Redis.Port),
 		Password: cfg.Redis.Password,
@@ -22,7 +22,7 @@ func New(cfg config.Config, opts ...Option) (*Redis, error) {
 	err := ping(client)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to connect to redis: %w", err)
 	}
 
 	return &Redis{

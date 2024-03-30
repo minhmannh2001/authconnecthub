@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/minhmannh2001/authconnecthub/internal/dto"
 	"github.com/minhmannh2001/authconnecthub/internal/helper"
-	"github.com/minhmannh2001/authconnecthub/internal/usecase"
+	"github.com/minhmannh2001/authconnecthub/internal/usecases"
 )
 
 func IsHtmxRequest(c *gin.Context) {
@@ -47,7 +47,7 @@ func triggerHtmxReload(c *gin.Context) {
 	c.Abort()
 }
 
-func IsAuthorized(auth usecase.Auth) gin.HandlerFunc {
+func IsAuthorized(auth usecases.IAuthUC) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		cfg := helper.GetConfig(c)
 		swaggerInfo, err := helper.GetSwaggerInfo(cfg.App.SwaggerPath)
@@ -131,7 +131,7 @@ func redirectToLogin(c *gin.Context, message string) {
 	c.Abort()
 }
 
-func IsLoggedIn(auth usecase.Auth) gin.HandlerFunc {
+func IsLoggedIn(auth usecases.IAuthUC) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		accessToken := helper.ExtractHeaderToken(c, helper.AccessTokenHeader)
 

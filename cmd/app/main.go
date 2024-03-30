@@ -1,12 +1,23 @@
 package main
 
 import (
-	"log"
+	"context"
+	"log/slog"
 
+	"go.uber.org/fx"
+
+	"github.com/gin-gonic/gin"
 	"github.com/minhmannh2001/authconnecthub/config"
-	"github.com/minhmannh2001/authconnecthub/internal/app"
-
 	_ "github.com/minhmannh2001/authconnecthub/docs"
+	router "github.com/minhmannh2001/authconnecthub/internal/controller/http"
+	"github.com/minhmannh2001/authconnecthub/internal/helper"
+	"github.com/minhmannh2001/authconnecthub/internal/middleware"
+	"github.com/minhmannh2001/authconnecthub/internal/usecases"
+	"github.com/minhmannh2001/authconnecthub/internal/usecases/repos"
+	"github.com/minhmannh2001/authconnecthub/pkg/httpserver"
+	"github.com/minhmannh2001/authconnecthub/pkg/logger"
+	"github.com/minhmannh2001/authconnecthub/pkg/postgres"
+	"github.com/minhmannh2001/authconnecthub/pkg/redis"
 )
 
 // @title 		  AuthConnect Hub
@@ -26,13 +37,94 @@ import (
 // @host          localhost:8080
 // @BasePath      /v1
 func main() {
-	// Configuration
-	cfg, err := config.NewConfig()
+	app := fx.New(
+		fx.Provide(
+			context.Background,
+			logger.NewLogger,
+			config.NewConfig,
+			postgres.New,
+			redis.New,
+			fx.Annotate(
+				repos.NewAuthRepo,
+				fx.As(new(repos.IAuthRepo)),
+			),
+			fx.Annotate(
+				repos.NewRoleRepo,
+				fx.As(new(repos.IRoleRepo)),
+			),
+			fx.Annotate(
+				repos.NewUserRepo,
+				fx.As(new(repos.IUserRepo)),
+			),
+			fx.Annotate(
+				usecases.NewRoleUseCase,
+				fx.As(new(usecases.IRoleUC)),
+			),
+			fx.Annotate(
+				usecases.NewAuthUseCase,
+				fx.As(new(usecases.IAuthUC)),
+			),
+			fx.Annotate(
+				usecases.NewUserUseCase,
+				fx.As(new(usecases.IUserUC)),
+			),
+			func(cfg *config.Config) struct{} { // Function to check for the existence of the Swagger file
+				_, err := helper.GetSwaggerInfo(cfg.App.SwaggerPath)
+				if err != nil {
+					panic(err)
+				}
+				return struct{}{}
+			},
+			func(cfg *config.Config, authUseCase usecases.IAuthUC) *gin.Engine {
+				e := gin.New()
+				// Middlewares
+				e.Use(func(c *gin.Context) {
+					c.Set("config", cfg)
+					c.Next()
+				})
+				e.Use(middleware.IsHtmxRequest)
+				e.Use(middleware.IsLoggedIn(authUseCase))
+				e.Use(middleware.IsAuthorized(authUseCase))
+				e.Use(gin.Logger())
+				e.Use(gin.Recovery())
 
-	if err != nil {
-		log.Fatalf("Config error: %s", err)
-	}
+				return e
+			},
+			router.New,
+			func(e *gin.Engine, cfg *config.Config, l *slog.Logger) *httpserver.Server {
+				httpServer := httpserver.New(e, httpserver.Port(cfg.App.Port))
+				l.Info("Server was started", slog.String("host", cfg.App.Host), slog.String("port", cfg.App.Port))
+				return httpServer
+			},
+		),
+		fx.Invoke(
+			setLifeCycle,
+		),
+	)
 
-	// Run
-	app.Run(cfg)
+	app.Run()
+}
+
+func setLifeCycle(
+	lc fx.Lifecycle,
+	r *router.HTTP,
+	s *httpserver.Server,
+	e *gin.Engine,
+	l *slog.Logger,
+) {
+	lc.Append(fx.Hook{
+		OnStart: func(ctx context.Context) error {
+			r.Start(e)
+			return nil
+		},
+		OnStop: func(ctx context.Context) error {
+			err := s.Shutdown()
+			if err != nil {
+				l.Error("app - Run - httpServer.Shutdown", slog.Any("error", err))
+				return err
+			}
+			l.Info("Server was shutdown")
+			return nil
+		},
+	})
 }

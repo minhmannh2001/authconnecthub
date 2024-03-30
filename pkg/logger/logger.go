@@ -1,92 +1,84 @@
 package logger
 
 import (
-	"fmt"
+	"context"
+	"encoding/json"
+	"io"
+	"log"
+	"log/slog"
 	"os"
-	"strings"
 
-	"github.com/rs/zerolog"
+	"github.com/fatih/color"
 )
 
-type Interface interface {
-	Debug(message interface{}, args ...interface{})
-	Info(message string, args ...interface{})
-	Warn(message string, args ...interface{})
-	Error(message interface{}, args ...interface{})
-	Fatal(message interface{}, args ...interface{})
+type PrettyHandlerOptions struct {
+	SlogOpts slog.HandlerOptions
 }
 
-type Logger struct {
-	logger *zerolog.Logger
+type PrettyHandler struct {
+	slog.Handler
+	l *log.Logger
 }
 
-func New(level string) *Logger {
-	var l zerolog.Level
+func (h *PrettyHandler) Handle(ctx context.Context, r slog.Record) error {
+	level := r.Level.String() + ":"
 
-	switch strings.ToLower(level) {
-	case "error":
-		l = zerolog.ErrorLevel
-	case "warn":
-		l = zerolog.WarnLevel
-	case "info":
-		l = zerolog.InfoLevel
-	case "debug":
-		l = zerolog.DebugLevel
-	default:
-		l = zerolog.InfoLevel
+	switch r.Level {
+	case slog.LevelDebug:
+		level = color.MagentaString(level)
+	case slog.LevelInfo:
+		level = color.BlueString(level)
+	case slog.LevelWarn:
+		level = color.YellowString(level)
+	case slog.LevelError:
+		level = color.RedString(level)
 	}
 
-	zerolog.SetGlobalLevel(l)
+	fields := make(map[string]interface{}, r.NumAttrs())
+	r.Attrs(func(a slog.Attr) bool {
+		fields[a.Key] = a.Value.Any()
 
-	skipFrameCount := 3
-	logger := zerolog.New(os.Stdout).With().Timestamp().CallerWithSkipFrameCount(zerolog.CallerSkipFrameCount + skipFrameCount).Logger()
+		return true
+	})
 
-	return &Logger{
-		logger: &logger,
-	}
-}
-
-func (l *Logger) Debug(message interface{}, args ...interface{}) {
-	l.msg("debug", message, args...)
-}
-
-func (l *Logger) Info(message string, args ...interface{}) {
-	l.log(message, args...)
-}
-
-func (l *Logger) Warn(message string, args ...interface{}) {
-	l.log(message, args...)
-}
-
-func (l *Logger) Error(message interface{}, args ...interface{}) {
-	if l.logger.GetLevel() == zerolog.DebugLevel {
-		l.Debug(message, args...)
+	b, err := json.MarshalIndent(fields, "", "  ")
+	if err != nil {
+		return err
 	}
 
-	l.msg("error", message, args...)
+	timeStr := r.Time.Format("[15:05:05.000]")
+	msg := color.CyanString(r.Message)
+
+	h.l.Println(timeStr, level, msg, color.WhiteString(string(b)))
+
+	return nil
 }
 
-func (l *Logger) Fatal(message interface{}, args ...interface{}) {
-	l.msg("fatal", message, args...)
-
-	os.Exit(1)
-}
-
-func (l *Logger) log(message string, args ...interface{}) {
-	if len(args) == 0 {
-		l.logger.Info().Msg(message)
-	} else {
-		l.logger.Info().Msgf(message, args...)
+func NewPrettyHandler(
+	out io.Writer,
+	opts PrettyHandlerOptions,
+) *PrettyHandler {
+	h := &PrettyHandler{
+		Handler: slog.NewJSONHandler(out, &opts.SlogOpts),
+		l:       log.New(out, "", 0),
 	}
+
+	return h
 }
 
-func (l *Logger) msg(level string, message interface{}, args ...interface{}) {
-	switch msg := message.(type) {
-	case error:
-		l.log(msg.Error(), args...)
-	case string:
-		l.log(msg, args...)
-	default:
-		l.log(fmt.Sprintf("%s message %v has unknown type %v", level, message, msg), args...)
+func NewLogger() *slog.Logger {
+	opts := PrettyHandlerOptions{
+		SlogOpts: slog.HandlerOptions{
+			Level:     slog.LevelDebug,
+			AddSource: true,
+		},
 	}
+	handler := NewPrettyHandler(os.Stdout, opts)
+	logger := slog.New(handler)
+
+	slog.SetDefault(logger)
+
+	return logger
 }
+
+// https://betterstack.com/community/guides/logging/logging-in-go/

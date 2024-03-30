@@ -1,10 +1,12 @@
-package usecase
+package usecases
+
+import "github.com/minhmannh2001/authconnecthub/internal/usecases/repos"
 
 type RoleUseCase struct {
-	roleRepo RoleRepo
+	roleRepo repos.IRoleRepo
 }
 
-func NewRoleUseCase(rr RoleRepo) *RoleUseCase {
+func NewRoleUseCase(rr repos.IRoleRepo) *RoleUseCase {
 	return &RoleUseCase{roleRepo: rr}
 }
 

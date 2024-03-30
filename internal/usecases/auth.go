@@ -1,4 +1,4 @@
-package usecase
+package usecases
 
 import (
 	"crypto/rsa"
@@ -13,25 +13,26 @@ import (
 	"github.com/minhmannh2001/authconnecthub/internal/dto"
 	"github.com/minhmannh2001/authconnecthub/internal/entity"
 	"github.com/minhmannh2001/authconnecthub/internal/helper"
+	"github.com/minhmannh2001/authconnecthub/internal/usecases/repos"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type AuthUseCase struct {
-	authRepo    AuthRepo
-	userUseCase UserUseCase
+	authRepo    repos.IAuthRepo
+	userUseCase IUserUC
 	privateKey  *rsa.PrivateKey
 }
 
-func NewAuthUseCase(ar AuthRepo, uu UserUseCase, pk *rsa.PrivateKey) *AuthUseCase {
+func NewAuthUseCase(ar repos.IAuthRepo, uu IUserUC, c *config.Config) *AuthUseCase {
 	return &AuthUseCase{
 		authRepo:    ar,
 		userUseCase: uu,
-		privateKey:  pk,
+		privateKey:  c.JwtPrivateKey,
 	}
 }
 
 func (au *AuthUseCase) Login(c *gin.Context, requestBody dto.LoginRequestBody) (*dto.JwtTokens, error) {
-	user, err := au.userUseCase.userRepo.FindByUsernameOrEmail(requestBody.Username, "")
+	user, err := au.userUseCase.FindByUsernameOrEmail(requestBody.Username, "")
 	if err != nil {
 		return nil, err
 	}

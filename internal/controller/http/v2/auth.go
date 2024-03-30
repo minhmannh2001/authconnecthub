@@ -1,29 +1,29 @@
-package v1
+package v2
 
 import (
+	"log/slog"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/minhmannh2001/authconnecthub/internal/dto"
 	"github.com/minhmannh2001/authconnecthub/internal/entity"
 	"github.com/minhmannh2001/authconnecthub/internal/helper"
-	"github.com/minhmannh2001/authconnecthub/internal/usecase"
-	"github.com/minhmannh2001/authconnecthub/pkg/logger"
+	"github.com/minhmannh2001/authconnecthub/internal/usecases"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type authRoutes struct {
-	l logger.Interface
-	a usecase.Auth
-	u usecase.User
-	r usecase.Role
+	logger *slog.Logger
+	authUC usecases.IAuthUC
+	userUC usecases.IUserUC
+	roleUC usecases.IRoleUC
 }
 
-func NewAuthenticationRoutes(handler *gin.RouterGroup,
-	l logger.Interface,
-	a usecase.Auth,
-	u usecase.User,
-	r usecase.Role,
+func NewAuthenRoutes(handler *gin.RouterGroup,
+	l *slog.Logger,
+	a usecases.IAuthUC,
+	u usecases.IUserUC,
+	r usecases.IRoleUC,
 ) {
 	ar := &authRoutes{l, a, u, r}
 
@@ -56,7 +56,7 @@ func (ar *authRoutes) register(c *gin.Context) {
 		bcrypt.DefaultCost,
 	)
 	if err != nil {
-		ar.l.Error(err)
+		ar.logger.Error("Password hashing failed", slog.Any("err", err))
 		response := dto.Response{
 			Success: false,
 			Data:    nil,
@@ -66,10 +66,10 @@ func (ar *authRoutes) register(c *gin.Context) {
 		return
 	}
 
-	roleID, err := ar.r.GetRoleIDByName("customer")
+	roleID, err := ar.roleUC.GetRoleIDByName("customer")
 
 	if err != nil {
-		ar.l.Error(err)
+		ar.logger.Error("Error getting role ID", slog.Any("err", err))
 		response := dto.Response{Success: false, Data: nil, Message: "Failed to create user"}
 		c.JSON(http.StatusInternalServerError, response)
 		return
@@ -82,7 +82,7 @@ func (ar *authRoutes) register(c *gin.Context) {
 		RoleID:   roleID,
 	}
 
-	newUser, err := ar.u.Create(user)
+	newUser, err := ar.userUC.Create(user)
 
 	if err != nil {
 		response := dto.Response{Success: false, Data: nil}
@@ -93,12 +93,13 @@ func (ar *authRoutes) register(c *gin.Context) {
 			return
 		}
 
-		ar.l.Error(err)
+		ar.logger.Error("Error creating user", slog.Any("err", err))
 		response.Message = "Failed to create user"
 		c.JSON(http.StatusInternalServerError, response)
 		return
 	}
 
+	ar.logger.Info("User created", slog.String("username", newUser.Username), slog.Any("roleID", newUser.RoleID), slog.String("email", newUser.Email))
 	response := dto.Response{
 		Success: true,
 		Data:    newUser,

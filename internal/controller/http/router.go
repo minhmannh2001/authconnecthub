@@ -1,27 +1,27 @@
 package http
 
 import (
+	"log/slog"
 	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 	v1 "github.com/minhmannh2001/authconnecthub/internal/controller/http/v1"
 	"github.com/minhmannh2001/authconnecthub/internal/helper"
-	"github.com/minhmannh2001/authconnecthub/internal/usecase"
-	"github.com/minhmannh2001/authconnecthub/pkg/logger"
+	"github.com/minhmannh2001/authconnecthub/internal/usecases"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 type HTTP struct {
-	logger logger.Interface
-	authUC usecase.Auth
-	userUC usecase.User
-	roleUC usecase.Role
+	logger *slog.Logger
+	authUC usecases.IAuthUC
+	userUC usecases.IUserUC
+	roleUC usecases.IRoleUC
 }
 
-func New(l logger.Interface, a usecase.Auth, u usecase.User, r usecase.Role) *HTTP {
+func New(l *slog.Logger, a usecases.IAuthUC, u usecases.IUserUC, r usecases.IRoleUC) *HTTP {
 	return &HTTP{
 		logger: l,
 		authUC: a,
@@ -31,9 +31,6 @@ func New(l logger.Interface, a usecase.Auth, u usecase.User, r usecase.Role) *HT
 }
 
 func (h *HTTP) Start(e *gin.Engine) {
-	e.Use(gin.Logger())
-	e.Use(gin.Recovery())
-
 	e.Static("/static", "./static")
 	e.LoadHTMLGlob("templates/*")
 	// Prometheus metrics
@@ -45,6 +42,10 @@ func (h *HTTP) Start(e *gin.Engine) {
 }
 
 func (h *HTTP) registerRoutes(e *gin.Engine) {
+	e.GET("/500.html", handleInternalServerError)
+	e.NoRoute(handleNotFound)
+	e.NoMethod(handleNoMethod)
+
 	e.GET("/", homeHandler)
 
 	e.PUT("/show-toast", func(c *gin.Context) {
@@ -67,6 +68,7 @@ func (h *HTTP) registerRoutes(e *gin.Engine) {
 	groupRouter := e.Group("/v1")
 	{
 		v1.NewAuthenRoutes(groupRouter, h.logger, h.authUC, h.userUC, h.roleUC)
+		e.GET("/dashboard", dashboardHandler)
 	}
 }
 
@@ -124,16 +126,7 @@ func privateHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, "Hello. You are in private path")
 }
 
-// @Summary Get Index Page
-// @Description This endpoint renders the index.html page with potential toast notification settings based on query parameters and validation.
-// @Tags index
-// @Accept json
-// @Produce html
-// @Param toast-message query string false "Message to display in the toast notification"
-// @Param toast-type query string false "Type of the toast notification (e.g., success, error)"
-// @Param hash-value query string false "Hash value used for validation (optional)"
-// @router / [GET]
-func NewRouter(handler *gin.Engine, l logger.Interface, a usecase.Auth, u usecase.User, r usecase.Role) {
+func NewRouter(handler *gin.Engine, l *slog.Logger, a usecases.IAuthUC, u usecases.IUserUC, r usecases.IRoleUC) {
 	handler.Use(gin.Logger())
 	handler.Use(gin.Recovery())
 

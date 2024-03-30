@@ -2,31 +2,31 @@ package v1
 
 import (
 	"fmt"
+	"log/slog"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/minhmannh2001/authconnecthub/internal/dto"
 	"github.com/minhmannh2001/authconnecthub/internal/entity"
 	"github.com/minhmannh2001/authconnecthub/internal/helper"
-	"github.com/minhmannh2001/authconnecthub/internal/usecase"
-	"github.com/minhmannh2001/authconnecthub/pkg/logger"
+	"github.com/minhmannh2001/authconnecthub/internal/usecases"
 	"golang.org/x/crypto/bcrypt"
 
 	_ "github.com/minhmannh2001/authconnecthub/docs"
 )
 
 type authRoutes struct {
-	l logger.Interface
-	a usecase.Auth
-	u usecase.User
-	r usecase.Role
+	logger *slog.Logger
+	authUC usecases.IAuthUC
+	userUC usecases.IUserUC
+	roleUC usecases.IRoleUC
 }
 
 func NewAuthenRoutes(handler *gin.RouterGroup,
-	l logger.Interface,
-	a usecase.Auth,
-	u usecase.User,
-	r usecase.Role,
+	l *slog.Logger,
+	a usecases.IAuthUC,
+	u usecases.IUserUC,
+	r usecases.IRoleUC,
 ) {
 	ar := &authRoutes{l, a, u, r}
 
@@ -121,7 +121,7 @@ func (ar *authRoutes) register(c *gin.Context) {
 		bcrypt.DefaultCost,
 	)
 	if err != nil {
-		ar.l.Error(err)
+		ar.logger.Error("Password hashing failed", slog.Any("err", err))
 		c.HTML(http.StatusBadRequest, "toast-section", gin.H{
 			"hidden":  false,
 			"type":    dto.ToastTypeDanger,
@@ -143,10 +143,10 @@ func (ar *authRoutes) register(c *gin.Context) {
 		return
 	}
 
-	roleID, err := ar.r.GetRoleIDByName("customer")
+	roleID, err := ar.roleUC.GetRoleIDByName("customer")
 
 	if err != nil {
-		ar.l.Error(err)
+		ar.logger.Error("Error getting role ID", slog.Any("err", err))
 		c.HTML(http.StatusBadRequest, "toast-section", gin.H{
 			"hidden":  false,
 			"type":    dto.ToastTypeDanger,
@@ -175,7 +175,7 @@ func (ar *authRoutes) register(c *gin.Context) {
 		RoleID:   roleID,
 	}
 
-	_, err = ar.u.Create(user)
+	newUser, err := ar.userUC.Create(user)
 
 	if err != nil {
 
@@ -194,7 +194,7 @@ func (ar *authRoutes) register(c *gin.Context) {
 			return
 		}
 
-		ar.l.Error(err)
+		ar.logger.Error("Error creating user", slog.Any("err", err))
 		c.HTML(http.StatusBadRequest, "toast-section", gin.H{
 			"hidden":  false,
 			"type":    dto.ToastTypeDanger,
@@ -217,16 +217,18 @@ func (ar *authRoutes) register(c *gin.Context) {
 	}
 
 	cfg := helper.GetConfig(c)
-	accessToken, _ := ar.a.CreateAccessToken(user, cfg.Authen.AccessTokenTtl)
-	refreshToken, _ := ar.a.CreateRefreshToken(user, accessToken, cfg.Authen.RefreshTokenTtl)
+	accessToken, _ := ar.authUC.CreateAccessToken(user, cfg.Authen.AccessTokenTtl)
+	refreshToken, _ := ar.authUC.CreateRefreshToken(user, accessToken, cfg.Authen.RefreshTokenTtl)
 
 	hashValue, err := helper.HashMap(map[string]interface{}{
 		"toast-message": "user-registered-successfully",
 		"toast-type":    dto.ToastTypeSuccess,
 	})
 	if err != nil {
-		ar.l.Error(err)
+		ar.logger.Error("Failed to generate toast message hash", slog.Any("err", err))
 	}
+
+	ar.logger.Info("User created", slog.String("username", newUser.Username), slog.Any("roleID", newUser.RoleID), slog.String("email", newUser.Email))
 	HXTriggerEvents, _ := helper.MapToJSONString(map[string]interface{}{
 		"saveToken": map[string]interface{}{
 			"accessToken":  accessToken,
@@ -241,7 +243,7 @@ func (ar *authRoutes) postLogin(c *gin.Context) {
 	var loginRequestBody dto.LoginRequestBody
 
 	if err := c.ShouldBind(&loginRequestBody); err != nil {
-		ar.l.Error(err)
+		ar.logger.Error("Validation error", slog.Any("err", err))
 		// generate validation errors response
 		validationMap := helper.GenerateValidationMap(err)
 		_ = validationMap
@@ -266,7 +268,7 @@ func (ar *authRoutes) postLogin(c *gin.Context) {
 		return
 	}
 
-	jwt_tokens, err := ar.a.Login(c, loginRequestBody)
+	jwt_tokens, err := ar.authUC.Login(c, loginRequestBody)
 	if err != nil {
 		inputData := map[string]string{
 			"username":    loginRequestBody.Username,
@@ -316,7 +318,7 @@ func (ar *authRoutes) postLogin(c *gin.Context) {
 		},
 	})
 	if err != nil {
-		ar.l.Error(err)
+		ar.logger.Error("Failed to create HX-Trigger events", slog.Any("err", err))
 	}
 
 	hashValue, err := helper.HashMap(map[string]interface{}{
@@ -324,8 +326,12 @@ func (ar *authRoutes) postLogin(c *gin.Context) {
 		"toast-type":    dto.ToastTypeSuccess,
 	})
 	if err != nil {
-		ar.l.Error(err)
+		ar.logger.Error("Failed to generate toast message hash", slog.Any("err", err))
+		helper.HandleInternalError(c, err)
+		return
 	}
+
+	ar.logger.Info("User logged in", slog.String("username", loginRequestBody.Username))
 	c.Header("HX-Trigger", HXTriggerEvents)
 	c.Header("HX-Redirect", fmt.Sprintf("/?toast-message=login-successfully&toast-type=%s&hash-value=%s", dto.ToastTypeSuccess, hashValue))
 }
@@ -336,8 +342,9 @@ func (ar *authRoutes) postLogin(c *gin.Context) {
 // @Security JWT
 // @Router /v1/auth/logout [GET]
 func (ar *authRoutes) LogoutHandler(c *gin.Context) {
-	err := ar.a.Logout(c)
+	err := ar.authUC.Logout(c)
 	if err != nil {
+		ar.logger.Error("Failed to logout user", slog.Any("username", c.MustGet("username")), slog.Any("err", err))
 		helper.HandleInternalError(c, err)
 		return
 	}
@@ -347,8 +354,10 @@ func (ar *authRoutes) LogoutHandler(c *gin.Context) {
 		"toast-type":    dto.ToastTypeSuccess,
 	})
 	if err != nil {
+		ar.logger.Error("Failed to generate toast message hash", slog.Any("err", err))
 		helper.HandleInternalError(c, err)
 		return
 	}
+	ar.logger.Error("User logged out", slog.Any("username", c.MustGet("username")))
 	c.Header("HX-Redirect", fmt.Sprintf("/?toast-message=logout-successfully&toast-type=%s&hash-value=%s", dto.ToastTypeSuccess, hashValue))
 }

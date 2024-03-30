@@ -5,6 +5,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
+	"log"
 	"os"
 	"sync"
 
@@ -87,6 +88,8 @@ func NewConfig() (*Config, error) {
 		if err != nil {
 			return nil, fmt.Errorf("error while reading private key: %w", err)
 		}
+
+		log.Println("config loaded")
 
 		instance = cfg
 	}
