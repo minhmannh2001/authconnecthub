@@ -135,3 +135,4 @@ func setLifeCycle(
 // https://github.com/amitshekhariitbhu/go-backend-clean-architecture
 // go, gorm & gin crud example: https://github.com/herusdianto/gorm_crud_example/tree/master
 // go fx: https://juejin.cn/post/7153582825399124005#heading-2
+// RBAC:https://dev.to/bensonmacharia/role-based-access-control-in-golang-with-jwt-go-ijn
