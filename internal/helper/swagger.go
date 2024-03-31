@@ -36,10 +36,7 @@ func IsPathMethodInSwagger(path string, method string, swaggerInfo *entity.Swagg
 		return false
 	}
 
-	if operation == nil {
-		return false // No operation defined for this path and method (not an error)
-	}
-	return true
+	return operation != nil // No operation defined for this path and method (not an error)
 }
 
 func HasSecurityKeyForPathAndMethod(path string, method string, swaggerInfo *entity.SwaggerInfo) (bool, error) {

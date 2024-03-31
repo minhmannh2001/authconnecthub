@@ -1,0 +1,12 @@
+profile: cover.out
+
+local-prefix: "github.com/minhmannh2001/authconnecthub"
+
+threshold:
+  file: 80
+  package: 80
+  total: 80
+
+exclude:
+  paths:
+    - ^(static|templates|docs|coverage)/.*

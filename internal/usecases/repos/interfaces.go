@@ -20,3 +20,5 @@ type (
 		GetRoleIDByName(string) (uint, error)
 	}
 )
+
+// mockery --dir=./internal/usecases/repos --output=./internal/usecases/repos/mocks --outpkg=mocks --all
