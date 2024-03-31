@@ -49,6 +49,8 @@ jobs:
 
       - name: Check test coverage
         uses: vladopajic/go-test-coverage@v2
+        with:
+          config: ./.testcoverage.yml
 
 # https://sparkbox.com/foundry/go_vet_gofmt_golint_to_code_check_in_Go
 # https://staticcheck.dev/
