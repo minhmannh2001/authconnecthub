@@ -128,3 +128,10 @@ func setLifeCycle(
 		},
 	})
 }
+
+// https://github.com/emarifer/goCMS/blob/main/cmd/gocms_admin/main.go
+// clean template: https://github.com/evrone/go-clean-template/tree/master
+// https://amitshekhar.me/blog/go-backend-clean-architecture
+// https://github.com/amitshekhariitbhu/go-backend-clean-architecture
+// go, gorm & gin crud example: https://github.com/herusdianto/gorm_crud_example/tree/master
+// go fx: https://juejin.cn/post/7153582825399124005#heading-2
