@@ -40,5 +40,9 @@ jobs:
 
       - name: Run tests
         run: go test -v ./...
+      
+      - name: Generate test report
+        uses: robherley/go-test-action@v0.1.0
 
 # https://sparkbox.com/foundry/go_vet_gofmt_golint_to_code_check_in_Go
+# https://staticcheck.dev/
