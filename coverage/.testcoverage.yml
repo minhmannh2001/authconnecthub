@@ -9,4 +9,4 @@ threshold:
 
 exclude:
   paths:
-    - ^(static|templates|docs)/.*
+    - ^(static|templates|docs|coverage)/.*

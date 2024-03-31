@@ -9,6 +9,16 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+
+    permissions:
+      pages: write
+      id-token: write
+
+    environment:
+      # environment created automatically by GitHub
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
     steps:
       - uses: actions/checkout@v3
 
@@ -48,14 +58,36 @@ jobs:
         run: go test ./... -coverprofile=./cover.out -covermode=atomic -coverpkg=./...
 
       - name: Visualize Coverage Profile
-        run: go tool cover -html=cover.out -o=cover.html
+        run: | 
+          go tool cover -html=cover.out -o=cover.html
+          mv cover.html ./coverage
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v3
+      
+      - name: Upload Artifact
+        uses: actions/upload-pages-artifact@v1
+        with:
+          # location of the coverage artifacts
+          path: "./coverage"
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2
+
+      - name: Adding test coverage notification
+        run: echo '[View Test Coverage Report](https://minhmannh2001.github.io/authconnecthub/cover.html)' >> $GITHUB_STEP_SUMMARY
 
       - name: Check test coverage
         uses: vladopajic/go-test-coverage@v2
         with:
-          config: ./.testcoverage.yml
+          config: ./coverage/.testcoverage.yml
       
 # https://sparkbox.com/foundry/go_vet_gofmt_golint_to_code_check_in_Go
 # https://staticcheck.dev/
 # https://github.com/marketplace/actions/go-test-action
 # https://github.com/marketplace/actions/go-coverage
+# deploy coverage report to GitHub Pages: https://medium.com/@mpaternostro/how-to-deploy-pages-on-github-using-actions-a9281d03b345
+# https://github.com/marketplace/actions/go-test-coverage
+# https://github.com/actions/deploy-pages/issues/76
+# https://github.blog/2022-05-09-supercharging-github-actions-with-job-summaries/
