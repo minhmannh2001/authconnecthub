@@ -43,6 +43,14 @@ jobs:
       
       - name: Generate test report
         uses: robherley/go-test-action@v0.1.0
+      
+      - name: Generate test coverage
+        run: go test ./... -coverprofile=./cover.out -covermode=atomic -coverpkg=./...
+
+      - name: Check test coverage
+        uses: vladopajic/go-test-coverage@v2
 
 # https://sparkbox.com/foundry/go_vet_gofmt_golint_to_code_check_in_Go
 # https://staticcheck.dev/
+# https://github.com/marketplace/actions/go-test-action
+# https://github.com/marketplace/actions/go-coverage
