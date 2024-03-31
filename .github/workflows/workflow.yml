@@ -57,6 +57,31 @@ jobs:
       - name: Generate test coverage
         run: go test ./... -coverprofile=./cover.out -covermode=atomic -coverpkg=./...
 
+      - name: Get coverage for badge
+        run: |
+          COVERAGE=$(go tool cover -func=cover.out | grep total: | grep -Eo '[0-9]+\.[0-9]+')
+          echo "COVERAGE=$COVERAGE" >> $GITHUB_ENV
+
+          REF=${{ github.ref }}
+          echo "github.ref: $REF"
+          IFS='/' read -ra PATHS <<< "$REF"
+          BRANCH_NAME="${PATHS[1]}_${PATHS[2]}"
+          echo $BRANCH_NAME
+          echo "BRANCH=$(echo ${BRANCH_NAME})" >> $GITHUB_ENV
+
+      - name: Create the badge
+        uses: schneegans/dynamic-badges-action@v1.7.0
+        with:
+          auth: ${{ secrets.GIST_SECRET }}
+          gistID: dcbe5bcf199a6a6915de30365c2a2d46
+          filename: authconnecthub__${{ env.BRANCH }}.json
+          label: Test Coverage
+          message: ${{ env.COVERAGE }}%
+          namedLogo: go
+          maxColorRange: 100
+          minColorRange: 0
+          valColorRange: ${{ env.COVERAGE }}
+
       - name: Visualize Coverage Profile
         run: | 
           go tool cover -html=cover.out -o=cover.html
@@ -91,3 +116,8 @@ jobs:
 # https://github.com/marketplace/actions/go-test-coverage
 # https://github.com/actions/deploy-pages/issues/76
 # https://github.blog/2022-05-09-supercharging-github-actions-with-job-summaries/
+# https://dev.to/thejaredwilcurt/coverage-badge-with-github-actions-finally-59fa
+# https://eremeev.ca/posts/golang-test-coverage-github-action/
+# https://medium.com/@sohaib278/how-to-add-go-unit-tests-and-coverage-stats-in-your-ci-using-github-actions-600b866bfae8
+# https://josh-ops.com/posts/github-code-coverage/
+# https://www.alexedwards.net/blog/ci-with-go-and-github-actions
