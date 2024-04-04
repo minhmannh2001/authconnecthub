@@ -17,8 +17,18 @@ func GenerateValidationResponse(err error) (response dto.ValidationResponse) {
 
 	var validations []dto.Validation
 
+	// Check if the error is of type validator.ValidationErrors
+	if err == nil {
+		response.Validations = append(response.Validations, dto.Validation{Field: "general", Message: "Unexpected validation error"})
+		return response
+	}
+
 	// get validation errors
-	validationErrors := err.(validator.ValidationErrors)
+	validationErrors, ok := err.(validator.ValidationErrors)
+	if !ok {
+		response.Validations = append(response.Validations, dto.Validation{Field: "general", Message: "Unexpected validation error"})
+		return response
+	}
 
 	for _, value := range validationErrors {
 		// get field & rule (tag)

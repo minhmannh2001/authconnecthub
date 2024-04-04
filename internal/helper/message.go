@@ -9,12 +9,7 @@ func GenerateValidationMessage(field string, rule string) (message string) {
 		return fmt.Sprintf("Field '%s' is '%s'.", field, rule)
 	// TODO: add another validator rule here
 	case "min":
-		if field == "Password" {
-			message = "Password must be at least 8 characters long."
-		}
-		if field == "ConfirmPassword" {
-			message = "Confirm password must be at least 8 characters long."
-		}
+		message = fmt.Sprintf("'%s' must be at least 8 characters long.", field)
 		return message
 	case "eqfield":
 		if field == "ConfirmPassword" {
