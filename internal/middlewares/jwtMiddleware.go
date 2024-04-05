@@ -38,9 +38,13 @@ func IsHtmxRequest(c *gin.Context) {
 }
 
 func triggerHtmxReload(c *gin.Context) {
+	path := c.Request.URL.Path
+	if c.Request.URL.RawQuery != "" {
+		path = path + "?" + c.Request.URL.RawQuery
+	}
 	c.HTML(http.StatusOK, "reload.html", gin.H{
 		"method":       c.Request.Method,
-		"path":         c.Request.URL.Path + "?" + c.Request.URL.RawQuery,
+		"path":         path,
 		"body":         nil, // The request body if method is PUT or PATCH,
 		"reloadHeader": true,
 	})
