@@ -515,3 +515,252 @@ func TestIsAuthorized_PrivateRouteExpiredToken(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestIsLoggedIn_NotLoggedIn(t *testing.T) {
+	mockAuth := mocks.NewIAuthUC(t)
+
+	gin.SetMode(gin.TestMode)
+	_, engine := gin.CreateTestContext(httptest.NewRecorder())
+	engine.Use(middlewares.IsLoggedIn(mockAuth))
+	engine.GET("/", func(c *gin.Context) {
+		c.Status(http.StatusOK)
+	})
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest(http.MethodGet, "/", nil)
+	engine.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestIsLoggedIn_ValidToken(t *testing.T) {
+	mockAuth := mocks.NewIAuthUC(t)
+	mockAuth.On("ValidateToken", mock.Anything).Return("username", nil)
+
+	gin.SetMode(gin.TestMode)
+	_, engine := gin.CreateTestContext(httptest.NewRecorder())
+	engine.Use(middlewares.IsLoggedIn(mockAuth))
+	engine.GET("/", func(c *gin.Context) {
+		c.Status(http.StatusOK)
+	})
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", "accessToken"))
+	engine.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestIsLoggedIn_LoggedInRedirectHome(t *testing.T) {
+	mockAuth := mocks.NewIAuthUC(t)
+	mockAuth.On("ValidateToken", mock.Anything).Return("username", nil)
+
+	gin.SetMode(gin.TestMode)
+	_, engine := gin.CreateTestContext(httptest.NewRecorder())
+	engine.Use(middlewares.IsLoggedIn(mockAuth))
+	engine.GET("/", func(c *gin.Context) {
+		c.Status(http.StatusOK)
+	})
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest(http.MethodGet, "/v1/auth/login", nil)
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", "accessToken"))
+	engine.ServeHTTP(w, req)
+
+	expectedHXRedirect := "/"
+	assert.Equal(t, expectedHXRedirect, w.Header().Get("HX-Redirect"))
+}
+
+func TestIsLoggedIn_ExpiredTokenUnrefreshable(t *testing.T) {
+	mockAuth := mocks.NewIAuthUC(t)
+	mockAuth.On("ValidateToken", mock.Anything).Return("", errors.New("token expired"))
+	mockAuth.On("IsTokenBlacklisted", mock.Anything).Return(true, nil)
+	mockAuth.On("RetrieveFieldFromJwtToken", mock.Anything, mock.Anything, mock.Anything).Return(interface{}(true), nil)
+
+	gin.SetMode(gin.TestMode)
+	_, engine := gin.CreateTestContext(httptest.NewRecorder())
+	engine.Use(middlewares.IsLoggedIn(mockAuth))
+	engine.GET("/", func(c *gin.Context) {
+		c.Status(http.StatusOK)
+	})
+
+	patchHashMap, err := mpatch.PatchMethod(helper.HashMap, func(data map[string]interface{}) (string, error) {
+		return "abc", nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", "accessToken"))
+	req.Header.Set("Refresh", fmt.Sprintf("Bearer %s", "refreshToken"))
+	engine.ServeHTTP(w, req)
+
+	expectedHXRedirect := "/v1/auth/login?toast-message=your-token-is-invalid.-please-log-in-to-continue.&toast-type=danger&hash-value=abc"
+	expectedHXTrigger := "{\"deleteToken\":{\"deleteFrom\":\"local\"}}"
+	assert.Equal(t, expectedHXRedirect, w.Result().Header.Get("HX-Redirect"))
+	assert.Equal(t, expectedHXTrigger, w.Result().Header.Get("HX-Trigger"))
+
+	err = patchHashMap.Unpatch()
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestIsLoggedIn_CheckAndRefreshTokensFail(t *testing.T) {
+	mockAuth := mocks.NewIAuthUC(t)
+	mockAuth.On("ValidateToken", mock.Anything).Return("", errors.New("token expired"))
+	mockAuth.On("IsTokenBlacklisted", mock.Anything).Return(false, nil)
+	mockAuth.On("CheckAndRefreshTokens", mock.Anything, mock.Anything, mock.Anything).Return("", "", errors.New("failed"))
+	mockAuth.On("RetrieveFieldFromJwtToken", mock.Anything, mock.Anything, mock.Anything).Return(interface{}(true), nil)
+
+	gin.SetMode(gin.TestMode)
+	_, engine := gin.CreateTestContext(httptest.NewRecorder())
+	mockConfig := &config.Config{
+		App: config.App{SwaggerPath: "test/swagger.yaml"},
+	}
+	engine.Use(func(c *gin.Context) {
+		c.Set("config", mockConfig)
+		c.Next()
+	})
+	engine.Use(middlewares.IsLoggedIn(mockAuth))
+	engine.GET("/", func(c *gin.Context) {
+		c.Status(http.StatusOK)
+	})
+
+	patchHashMap, err := mpatch.PatchMethod(helper.HashMap, func(data map[string]interface{}) (string, error) {
+		return "abc", nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", "accessToken"))
+	req.Header.Set("Refresh", fmt.Sprintf("Bearer %s", "refreshToken"))
+	engine.ServeHTTP(w, req)
+
+	expectedHXRedirect := "/v1/auth/login?toast-message=your-session-has-expired.-please-log-in-to-continue.&toast-type=danger&hash-value=abc"
+	expectedHXTrigger := "{\"deleteToken\":{\"deleteFrom\":\"local\"}}"
+	assert.Equal(t, expectedHXRedirect, w.Result().Header.Get("HX-Redirect"))
+	assert.Equal(t, expectedHXTrigger, w.Result().Header.Get("HX-Trigger"))
+
+	err = patchHashMap.Unpatch()
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestIsLoggedIn_ExpiredTokenRefreshable(t *testing.T) {
+	mockAuth := mocks.NewIAuthUC(t)
+	mockAuth.On("ValidateToken", mock.Anything).Return("", errors.New("token expired"))
+	mockAuth.On("IsTokenBlacklisted", mock.Anything).Return(false, nil)
+	mockAuth.On("CheckAndRefreshTokens", mock.Anything, mock.Anything, mock.Anything).Return("newAccessToken", "newRerefreshToken", nil)
+	mockAuth.On("RetrieveFieldFromJwtToken", mock.Anything, mock.Anything, mock.Anything).Return(interface{}(true), nil)
+
+	gin.SetMode(gin.TestMode)
+	_, engine := gin.CreateTestContext(httptest.NewRecorder())
+	mockConfig := &config.Config{
+		App: config.App{SwaggerPath: "test/swagger.yaml"},
+	}
+	engine.Use(func(c *gin.Context) {
+		c.Set("config", mockConfig)
+		c.Next()
+	})
+	engine.Use(middlewares.IsLoggedIn(mockAuth))
+	engine.GET("/", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"newAccessToken":    "newAccessToken",
+			"newRerefreshToken": "newRerefreshToken",
+		})
+	})
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", "accessToken"))
+	req.Header.Set("Refresh", fmt.Sprintf("Bearer %s", "refreshToken"))
+	engine.ServeHTTP(w, req)
+
+	expectedBody := "{\"newAccessToken\":\"newAccessToken\",\"newRerefreshToken\":\"newRerefreshToken\"}"
+	expectedHXTrigger := "{\"saveToken\":{\"accessToken\":\"newAccessToken\",\"refreshToken\":\"newRerefreshToken\",\"saveTo\":\"local\"}}"
+	assert.Equal(t, expectedHXTrigger, w.Result().Header.Get("HX-Trigger"))
+	assert.Equal(t, expectedBody, w.Body.String())
+	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestIsLoggedIn_ExpiredTokenRefreshable_RedirectToHome(t *testing.T) {
+	mockAuth := mocks.NewIAuthUC(t)
+	mockAuth.On("ValidateToken", mock.Anything).Return("", errors.New("token expired"))
+	mockAuth.On("IsTokenBlacklisted", mock.Anything).Return(false, nil)
+	mockAuth.On("CheckAndRefreshTokens", mock.Anything, mock.Anything, mock.Anything).Return("newAccessToken", "newRerefreshToken", nil)
+	mockAuth.On("RetrieveFieldFromJwtToken", mock.Anything, mock.Anything, mock.Anything).Return(interface{}(true), nil)
+
+	gin.SetMode(gin.TestMode)
+	_, engine := gin.CreateTestContext(httptest.NewRecorder())
+	mockConfig := &config.Config{
+		App: config.App{SwaggerPath: "test/swagger.yaml"},
+	}
+	engine.Use(func(c *gin.Context) {
+		c.Set("config", mockConfig)
+		c.Next()
+	})
+	engine.Use(middlewares.IsLoggedIn(mockAuth))
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest(http.MethodGet, "/v1/auth/login", nil)
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", "accessToken"))
+	req.Header.Set("Refresh", fmt.Sprintf("Bearer %s", "refreshToken"))
+	engine.ServeHTTP(w, req)
+
+	expectedHXRedirect := "/"
+	expectedHXTrigger := "{\"saveToken\":{\"accessToken\":\"newAccessToken\",\"refreshToken\":\"newRerefreshToken\",\"saveTo\":\"local\"}}"
+	assert.Equal(t, expectedHXTrigger, w.Result().Header.Get("HX-Trigger"))
+	assert.Equal(t, expectedHXRedirect, w.Result().Header.Get("HX-Redirect"))
+}
+
+func TestIsLoggedIn_DeleteTokensFromAllPlaces(t *testing.T) {
+	mockAuth := mocks.NewIAuthUC(t)
+	mockAuth.On("ValidateToken", mock.Anything).Return("", errors.New("token expired"))
+	mockAuth.On("IsTokenBlacklisted", mock.Anything).Return(false, nil)
+	mockAuth.On("CheckAndRefreshTokens", mock.Anything, mock.Anything, mock.Anything).Return("newAccessToken", "newRerefreshToken", nil)
+	mockAuth.On("RetrieveFieldFromJwtToken", mock.Anything, mock.Anything, mock.Anything).Return(interface{}(true), nil).Once()
+	mockAuth.On("RetrieveFieldFromJwtToken", mock.Anything, mock.Anything, mock.Anything).Return(nil, errors.New("failed")).Once()
+
+	gin.SetMode(gin.TestMode)
+	_, engine := gin.CreateTestContext(httptest.NewRecorder())
+	mockConfig := &config.Config{
+		App: config.App{SwaggerPath: "test/swagger.yaml"},
+	}
+	engine.Use(func(c *gin.Context) {
+		c.Set("config", mockConfig)
+		c.Next()
+	})
+	engine.Use(middlewares.IsLoggedIn(mockAuth))
+	engine.GET("/", func(c *gin.Context) {
+		c.Status(http.StatusOK)
+	})
+
+	patchMapToJSONString, err := mpatch.PatchMethod(helper.MapToJSONString, func(data map[string]interface{}) (string, error) {
+		return "", errors.New("failed")
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", "accessToken"))
+	req.Header.Set("Refresh", fmt.Sprintf("Bearer %s", "refreshToken"))
+	engine.ServeHTTP(w, req)
+
+	expectedHXRedirect := "/500.html"
+	assert.Equal(t, expectedHXRedirect, w.Result().Header.Get("HX-Redirect"))
+
+	err = patchMapToJSONString.Unpatch()
+	if err != nil {
+		t.Fatal(err)
+	}
+}

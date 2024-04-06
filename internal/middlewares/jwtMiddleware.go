@@ -94,7 +94,7 @@ func IsAuthorized(auth usecases.IAuthUC) gin.HandlerFunc {
 		if isInBlackList {
 			rememberMe, _ := auth.RetrieveFieldFromJwtToken(accessToken, "remember_me", false)
 			toastMessage := "your-token-is-invalid.-please-log-in-to-continue."
-			helper.DeleteTokens(c, rememberMe.(bool))
+			helper.DeleteTokens(c, rememberMe.(bool), false)
 			redirectToLogin(c, toastMessage)
 			return
 		}
@@ -107,7 +107,7 @@ func IsAuthorized(auth usecases.IAuthUC) gin.HandlerFunc {
 			}
 			log.Printf("Internal error: %v\n", err)
 			rememberMe, _ := auth.RetrieveFieldFromJwtToken(accessToken, "remember_me", true)
-			helper.DeleteTokens(c, rememberMe.(bool))
+			helper.DeleteTokens(c, rememberMe.(bool), false)
 			toastMessage := "your-session-has-expired.-please-log-in-to-continue."
 			redirectToLogin(c, toastMessage)
 			return
@@ -150,7 +150,7 @@ func IsLoggedIn(auth usecases.IAuthUC) gin.HandlerFunc {
 					if isInBlackList {
 						rememberMe, _ := auth.RetrieveFieldFromJwtToken(accessToken, "remember_me", false)
 						toastMessage := "your-token-is-invalid.-please-log-in-to-continue."
-						helper.DeleteTokens(c, rememberMe.(bool))
+						helper.DeleteTokens(c, rememberMe.(bool), false)
 						redirectToLogin(c, toastMessage)
 						return
 					}
@@ -190,12 +190,11 @@ func IsLoggedIn(auth usecases.IAuthUC) gin.HandlerFunc {
 				rememberMe, err := auth.RetrieveFieldFromJwtToken(accessToken, "remember_me", false)
 				if err != nil {
 					// delete tokens in both local storage and session storage when it is not valid token
-					helper.DeleteTokens(c, true)
-					helper.DeleteTokens(c, false)
+					helper.DeleteTokens(c, true, true)
 					helper.HandleInternalError(c, err)
 					return
 				}
-				helper.DeleteTokens(c, rememberMe.(bool))
+				helper.DeleteTokens(c, rememberMe.(bool), false)
 				toastMessage := "your-session-has-expired.-please-log-in-to-continue."
 				redirectToLogin(c, toastMessage)
 				return

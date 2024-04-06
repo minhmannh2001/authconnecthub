@@ -265,7 +265,7 @@ func (au *AuthUseCase) Logout(c *gin.Context) error {
 		return err
 	}
 
-	helper.DeleteTokens(c, rememberMe.(bool))
+	helper.DeleteTokens(c, rememberMe.(bool), false)
 
 	return nil
 }

@@ -76,6 +76,7 @@ func TestExtractHeaderToken(t *testing.T) {
 }
 
 func TestDeleteTokens(t *testing.T) {
+	gin.SetMode(gin.TestMode)
 	// Define test cases
 	testCases := []struct {
 		rememberMe bool
@@ -90,7 +91,7 @@ func TestDeleteTokens(t *testing.T) {
 		mockContext.Request = &http.Request{}
 		mockContext.Request.Header = http.Header{}
 
-		helper.DeleteTokens(mockContext, tc.rememberMe)
+		helper.DeleteTokens(mockContext, tc.rememberMe, false)
 
 		assert.Equal(t, tc.expected, mockContext.Writer.Header().Get("HX-Trigger"))
 	}
