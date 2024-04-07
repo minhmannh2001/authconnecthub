@@ -14,6 +14,10 @@ var swaggerInfo *entity.SwaggerInfo
 var once sync.Once
 
 func IsPathMethodInSwagger(path string, method string, swaggerInfo *entity.SwaggerInfo) bool {
+	if path == "" || method == "" || swaggerInfo == nil {
+		return false
+	}
+
 	pathItem, ok := swaggerInfo.Paths[path]
 	if !ok {
 		return false // we don't need to explicitly check for non-existent paths because Gin automatically handles them
@@ -40,6 +44,10 @@ func IsPathMethodInSwagger(path string, method string, swaggerInfo *entity.Swagg
 }
 
 func HasSecurityKeyForPathAndMethod(path string, method string, swaggerInfo *entity.SwaggerInfo) (bool, error) {
+	if path == "" || method == "" || swaggerInfo == nil {
+		return false, nil
+	}
+
 	// Check if the path exists in the Swagger content
 	pathItem, ok := swaggerInfo.Paths[path]
 	if !ok {

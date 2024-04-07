@@ -52,12 +52,12 @@ func (au *AuthUseCase) Login(c *gin.Context, requestBody dto.LoginRequestBody) (
 	cfg := _cfg.(*config.Config)
 
 	// Generate and return JWT tokens upon successful login
-	accessToken, err := au.CreateAccessToken(*user, cfg.Authen.AccessTokenTtl)
+	accessToken, err := au.CreateAccessToken(*user, cfg.Authen.AccessTokenTTL)
 	if err != nil {
 		return nil, err
 	}
 
-	refreshToken, err := au.CreateRefreshToken(*user, accessToken, cfg.Authen.RefreshTokenTtl)
+	refreshToken, err := au.CreateRefreshToken(*user, accessToken, cfg.Authen.RefreshTokenTTL)
 	if err != nil {
 		return nil, err
 	}
@@ -188,12 +188,12 @@ func (au *AuthUseCase) CheckAndRefreshTokens(oldAccessToken string, oldRefreshTo
 	user := entity.User{Username: username, RememberMe: rememberMe.(bool)}
 
 	// Create new access token
-	newAccessToken, err := au.CreateAccessToken(user, cfg.Authen.AccessTokenTtl)
+	newAccessToken, err := au.CreateAccessToken(user, cfg.Authen.AccessTokenTTL)
 	if err != nil {
 		return "", "", err
 	}
 
-	newRefreshToken, err := au.CreateRefreshToken(user, newAccessToken, cfg.Authen.RefreshTokenTtl)
+	newRefreshToken, err := au.CreateRefreshToken(user, newAccessToken, cfg.Authen.RefreshTokenTTL)
 	if err != nil {
 		return "", "", err
 	}
@@ -249,12 +249,12 @@ func (au *AuthUseCase) Logout(c *gin.Context) error {
 	refreshToken := helper.ExtractHeaderToken(c, helper.RefreshTokenHeader)
 
 	cfg := helper.GetConfig(c)
-	err := au.authRepo.BlacklistToken(accessToken, cfg.Authen.AccessTokenTtl)
+	err := au.authRepo.BlacklistToken(accessToken, cfg.Authen.AccessTokenTTL)
 	if err != nil {
 		return err
 	}
 
-	err = au.authRepo.BlacklistToken(refreshToken, cfg.Authen.RefreshTokenTtl)
+	err = au.authRepo.BlacklistToken(refreshToken, cfg.Authen.RefreshTokenTTL)
 	if err != nil {
 		return err
 	}
@@ -265,7 +265,7 @@ func (au *AuthUseCase) Logout(c *gin.Context) error {
 		return err
 	}
 
-	helper.DeleteTokens(c, rememberMe.(bool))
+	helper.DeleteTokens(c, rememberMe.(bool), false)
 
 	return nil
 }

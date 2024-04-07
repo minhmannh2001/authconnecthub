@@ -14,6 +14,7 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
+// HTTP controller
 type HTTP struct {
 	logger *slog.Logger
 	authUC usecases.IAuthUC
@@ -21,6 +22,7 @@ type HTTP struct {
 	roleUC usecases.IRoleUC
 }
 
+// New returns a new HTTP controller
 func New(l *slog.Logger, a usecases.IAuthUC, u usecases.IUserUC, r usecases.IRoleUC) *HTTP {
 	return &HTTP{
 		logger: l,
@@ -30,6 +32,7 @@ func New(l *slog.Logger, a usecases.IAuthUC, u usecases.IUserUC, r usecases.IRol
 	}
 }
 
+// Start starts the HTTP controller
 func (h *HTTP) Start(e *gin.Engine) {
 	e.Static("/static", "./static")
 	e.LoadHTMLGlob("templates/*")
@@ -124,49 +127,6 @@ func homeHandler(c *gin.Context) {
 // @router /private [GET]
 func privateHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, "Hello. You are in private path")
-}
-
-func NewRouter(handler *gin.Engine, l *slog.Logger, a usecases.IAuthUC, u usecases.IUserUC, r usecases.IRoleUC) {
-	handler.Use(gin.Logger())
-	handler.Use(gin.Recovery())
-
-	handler.Static("/static", "./static")
-	handler.LoadHTMLGlob("templates/*")
-	// Prometheus metrics
-	handler.GET("/metrics", gin.WrapH(promhttp.Handler()))
-
-	handler.GET("/swagger/v1/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-
-	handler.GET("/500.html", handleInternalServerError)
-	handler.NoRoute(handleNotFound)
-	handler.NoMethod(handleNoMethod)
-
-	handler.GET("/", homeHandler)
-
-	handler.PUT("/show-toast", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "toast-section", gin.H{
-			"hidden": false,
-		})
-	})
-
-	handler.PUT("/close-toast", func(c *gin.Context) {
-		url := strings.Split(c.Request.Header.Get("HX-Current-URL"), "?")[0]
-		c.Header("HX-Replace-Url", url)
-		c.HTML(http.StatusOK, "toast-section", gin.H{
-			"hidden": true,
-		})
-	})
-
-	handler.GET("/private", func(c *gin.Context) {
-		c.JSON(http.StatusOK, "hello")
-	})
-
-	// Routers
-	h := handler.Group("/v1")
-	{
-		v1.NewAuthenRoutes(h, l, a, u, r)
-		h.GET("/dashboard", dashboardHandler)
-	}
 }
 
 func handleInternalServerError(c *gin.Context) {

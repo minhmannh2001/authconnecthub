@@ -1,0 +1,7 @@
+{{ if eq .method "GET" }}
+    <div hx-get="{{ .path }}" hx-swap="outerHTML" hx-trigger="load"></div>
+{{ else if or (eq .method "POST") ((eq .method "PUT")) }}
+    <form hx-post="{{ .path }}" hx-swap="outerHTML" hx-trigger="load"></form>
+{{ else if eq .method "DELETE" }}
+    <div hx-delete="{{ .path }}" hx-swap="outerHTML" hx-trigger="load"></div>
+{{ end }}

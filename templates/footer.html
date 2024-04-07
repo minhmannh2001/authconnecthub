@@ -39,7 +39,12 @@
         if (deleteFrom == "local") {
             localStorage.removeItem("accessToken")
             localStorage.removeItem("refreshToken")
+        } else if (deleteFrom == "session") {
+            sessionStorage.removeItem("accessToken")
+            sessionStorage.removeItem("refreshToken")
         } else {
+            localStorage.removeItem("accessToken")
+            localStorage.removeItem("refreshToken")
             sessionStorage.removeItem("accessToken")
             sessionStorage.removeItem("refreshToken")
         }

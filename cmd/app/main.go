@@ -10,8 +10,7 @@ import (
 	"github.com/minhmannh2001/authconnecthub/config"
 	_ "github.com/minhmannh2001/authconnecthub/docs"
 	router "github.com/minhmannh2001/authconnecthub/internal/controller/http"
-	"github.com/minhmannh2001/authconnecthub/internal/helper"
-	"github.com/minhmannh2001/authconnecthub/internal/middleware"
+	"github.com/minhmannh2001/authconnecthub/internal/middlewares"
 	"github.com/minhmannh2001/authconnecthub/internal/usecases"
 	"github.com/minhmannh2001/authconnecthub/internal/usecases/repos"
 	"github.com/minhmannh2001/authconnecthub/pkg/httpserver"
@@ -68,13 +67,6 @@ func main() {
 				usecases.NewUserUseCase,
 				fx.As(new(usecases.IUserUC)),
 			),
-			func(cfg *config.Config) struct{} { // Function to check for the existence of the Swagger file
-				_, err := helper.GetSwaggerInfo(cfg.App.SwaggerPath)
-				if err != nil {
-					panic(err)
-				}
-				return struct{}{}
-			},
 			func(cfg *config.Config, authUseCase usecases.IAuthUC) *gin.Engine {
 				e := gin.New()
 				// Middlewares
@@ -82,9 +74,9 @@ func main() {
 					c.Set("config", cfg)
 					c.Next()
 				})
-				e.Use(middleware.IsHtmxRequest)
-				e.Use(middleware.IsLoggedIn(authUseCase))
-				e.Use(middleware.IsAuthorized(authUseCase))
+				e.Use(middlewares.IsHtmxRequest)
+				e.Use(middlewares.IsLoggedIn(authUseCase))
+				e.Use(middlewares.IsAuthorized(authUseCase))
 				e.Use(gin.Logger())
 				e.Use(gin.Recovery())
 

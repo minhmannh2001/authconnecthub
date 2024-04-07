@@ -1,4 +1,4 @@
-package middleware
+package middlewares
 
 import (
 	"fmt"
@@ -38,9 +38,13 @@ func IsHtmxRequest(c *gin.Context) {
 }
 
 func triggerHtmxReload(c *gin.Context) {
+	path := c.Request.URL.Path
+	if c.Request.URL.RawQuery != "" {
+		path = path + "?" + c.Request.URL.RawQuery
+	}
 	c.HTML(http.StatusOK, "reload.html", gin.H{
 		"method":       c.Request.Method,
-		"path":         c.Request.URL.Path + "?" + c.Request.URL.RawQuery,
+		"path":         path,
 		"body":         nil, // The request body if method is PUT or PATCH,
 		"reloadHeader": true,
 	})
@@ -90,7 +94,7 @@ func IsAuthorized(auth usecases.IAuthUC) gin.HandlerFunc {
 		if isInBlackList {
 			rememberMe, _ := auth.RetrieveFieldFromJwtToken(accessToken, "remember_me", false)
 			toastMessage := "your-token-is-invalid.-please-log-in-to-continue."
-			helper.DeleteTokens(c, rememberMe.(bool))
+			helper.DeleteTokens(c, rememberMe.(bool), false)
 			redirectToLogin(c, toastMessage)
 			return
 		}
@@ -103,7 +107,7 @@ func IsAuthorized(auth usecases.IAuthUC) gin.HandlerFunc {
 			}
 			log.Printf("Internal error: %v\n", err)
 			rememberMe, _ := auth.RetrieveFieldFromJwtToken(accessToken, "remember_me", true)
-			helper.DeleteTokens(c, rememberMe.(bool))
+			helper.DeleteTokens(c, rememberMe.(bool), false)
 			toastMessage := "your-session-has-expired.-please-log-in-to-continue."
 			redirectToLogin(c, toastMessage)
 			return
@@ -146,7 +150,7 @@ func IsLoggedIn(auth usecases.IAuthUC) gin.HandlerFunc {
 					if isInBlackList {
 						rememberMe, _ := auth.RetrieveFieldFromJwtToken(accessToken, "remember_me", false)
 						toastMessage := "your-token-is-invalid.-please-log-in-to-continue."
-						helper.DeleteTokens(c, rememberMe.(bool))
+						helper.DeleteTokens(c, rememberMe.(bool), false)
 						redirectToLogin(c, toastMessage)
 						return
 					}
@@ -186,12 +190,11 @@ func IsLoggedIn(auth usecases.IAuthUC) gin.HandlerFunc {
 				rememberMe, err := auth.RetrieveFieldFromJwtToken(accessToken, "remember_me", false)
 				if err != nil {
 					// delete tokens in both local storage and session storage when it is not valid token
-					helper.DeleteTokens(c, true)
-					helper.DeleteTokens(c, false)
+					helper.DeleteTokens(c, true, true)
 					helper.HandleInternalError(c, err)
 					return
 				}
-				helper.DeleteTokens(c, rememberMe.(bool))
+				helper.DeleteTokens(c, rememberMe.(bool), false)
 				toastMessage := "your-session-has-expired.-please-log-in-to-continue."
 				redirectToLogin(c, toastMessage)
 				return

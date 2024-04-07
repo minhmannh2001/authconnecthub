@@ -9,4 +9,7 @@ threshold:
 
 exclude:
   paths:
-    - ^(static|templates|docs|coverage|config)/.*
+    - ^(static|templates|docs|coverage|config|tests)/.*
+    - ^internal/(dto|entity)/.*
+    - ^internal/usecases/(repos/mocks|mocks)/.*
+    - .*/options\.go

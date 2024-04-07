@@ -3,8 +3,11 @@ package helper
 import (
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"strings"
 )
+
+const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 func ToLowerFirstChar(str string) string {
 	if str == "" {
@@ -44,4 +47,12 @@ func MapToJSONString(data map[string]interface{}) (string, error) {
 		return "", fmt.Errorf("error marshalling map to JSON: %w", err)
 	}
 	return string(jsonData), nil
+}
+
+func RandStringBytes(n int) string {
+	b := make([]byte, n)
+	for i := range b {
+		b[i] = letterBytes[rand.Intn(len(letterBytes))]
+	}
+	return string(b)
 }

@@ -27,10 +27,13 @@ func ExtractHeaderToken(c *gin.Context, tokenType string) string {
 	return ""
 }
 
-func DeleteTokens(c *gin.Context, rememberMe bool) {
+func DeleteTokens(c *gin.Context, rememberMe bool, deleteAll bool) {
 	deleteFrom := "session"
 	if rememberMe {
 		deleteFrom = "local"
+	}
+	if deleteAll {
+		deleteFrom = "all"
 	}
 	HXTriggerEvents, _ := MapToJSONString(map[string]interface{}{
 		"deleteToken": map[string]interface{}{

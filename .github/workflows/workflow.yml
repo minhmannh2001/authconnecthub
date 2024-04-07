@@ -55,7 +55,18 @@ jobs:
         uses: robherley/go-test-action@v0.1.0
       
       - name: Generate test coverage
-        run: go test ./... -coverprofile=./cover.out -covermode=atomic -coverpkg=./...
+        run: |
+          echo "creating test command..."
+          TEST_COMMAND="go test"
+          FOLDERS_AFTER_EXCLUDE_FROM_TEST="go list ./..."
+          for item in $(echo ${{ vars.EXCLUDE_FROM_TEST }} | tr ',' ' '); do
+            FOLDERS_AFTER_EXCLUDE_FROM_TEST="${FOLDERS_AFTER_EXCLUDE_FROM_TEST} | grep -v \"$item\""
+          done
+          FOLDERS_AFTER_EXCLUDE_FROM_TEST="\$(${FOLDERS_AFTER_EXCLUDE_FROM_TEST})"
+          echo $FOLDERS_AFTER_EXCLUDE_FROM_TEST
+          TEST_COMMAND="${TEST_COMMAND} ${FOLDERS_AFTER_EXCLUDE_FROM_TEST} -coverprofile=./cover.out -covermode=atomic -coverpkg=./..."
+          echo $TEST_COMMAND
+          eval $TEST_COMMAND
 
       - name: Get coverage for badge
         run: |

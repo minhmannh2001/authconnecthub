@@ -13,6 +13,7 @@ import (
 )
 
 type (
+	// Config contains app config.
 	Config struct {
 		App    `yaml:"app"`
 		Log    `yaml:"logger"`
@@ -21,6 +22,7 @@ type (
 		Authen `yaml:"authen"`
 	}
 
+	// App contains app config.
 	App struct {
 		Name        string `env-required:"true" yaml:"name"         env:"APP_NAME"`
 		Version     string `env-required:"true" yaml:"version"      env:"APP_VERSION"`
@@ -29,10 +31,12 @@ type (
 		SwaggerPath string `env-required:"true" yaml:"swagger_path" env:"SWAGGER_PATH"`
 	}
 
+	// Log contains logger config.
 	Log struct {
 		Level string `env-required:"true" yaml:"log_level" env:"LOG_LEVEL"`
 	}
 
+	// PG contains postgres config.
 	PG struct {
 		Host     string `env-required:"true" yaml:"host"     env:"PG_HOST"`
 		Port     string `env-required:"true" yaml:"port"     env:"PG_PORT"`
@@ -42,18 +46,20 @@ type (
 		Sslmode  string `env-required:"true" yaml:"sslmode"  env:"PG_SSLMODE"`
 	}
 
+	// Redis contains redis config.
 	Redis struct {
 		Host     string `env-required:"true" yaml:"host"     env:"REDIS_HOST"`
 		Port     string `env-required:"true" yaml:"port"     env:"REDIS_PORT"`
 		Password string `env-required:"true" yaml:"password" env:"REDIS_PASSWORD"`
 	}
 
+	// Authen contains authen config.
 	Authen struct {
 		AdminUsername     string `env-required:"true" yaml:"admin_username"       env:"ADMIN_USERNAME"`
 		AdminEmail        string `env-required:"true" yaml:"admin_email"          env:"ADMIN_EMAIL"`
 		AdminPassword     string `env-required:"true" yaml:"admin_password"       env:"ADMIN_PASSWORD"`
-		AccessTokenTtl    int    `env-required:"true" yaml:"access_token_ttl"     env:"ACCESS_TOKEN_TTL"`
-		RefreshTokenTtl   int    `env-required:"true" yaml:"refresh_token_ttl"    env:"REFRESH_TOKEN_TTL"`
+		AccessTokenTTL    int    `env-required:"true" yaml:"access_token_ttl"     env:"ACCESS_TOKEN_TTL"`
+		RefreshTokenTTL   int    `env-required:"true" yaml:"refresh_token_ttl"    env:"REFRESH_TOKEN_TTL"`
 		JwtPrivateKeyPath string `env-required:"true" yaml:"jwt_private_key_path" env:"JWT_PRIVATE_KEY_PATH"`
 		JwtPrivateKey     *rsa.PrivateKey
 		SecretKey         string `env-required:"true" yaml:"secret_key"           env:"SECRET_KEY"`
