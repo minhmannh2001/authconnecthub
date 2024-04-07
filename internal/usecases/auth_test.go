@@ -44,8 +44,8 @@ func TestAuthUseCase_Login_Success(t *testing.T) {
 	assert.NoError(t, err)
 
 	mockConfig := &config.Config{Authen: config.Authen{
-		RefreshTokenTtl: 3600,
-		AccessTokenTtl:  600,
+		RefreshTokenTTL: 3600,
+		AccessTokenTTL:  600,
 		JwtPrivateKey:   privateKey,
 	}}
 
@@ -80,8 +80,8 @@ func TestAuthUseCase_Login_UserNotFound(t *testing.T) {
 	assert.NoError(t, err)
 
 	mockConfig := &config.Config{Authen: config.Authen{
-		RefreshTokenTtl: 3600,
-		AccessTokenTtl:  600,
+		RefreshTokenTTL: 3600,
+		AccessTokenTTL:  600,
 		JwtPrivateKey:   privateKey,
 	}}
 
@@ -121,8 +121,8 @@ func TestAuthUseCase_Login_InvalidCredentials(t *testing.T) {
 	assert.NoError(t, err)
 
 	mockConfig := &config.Config{Authen: config.Authen{
-		RefreshTokenTtl: 3600,
-		AccessTokenTtl:  600,
+		RefreshTokenTTL: 3600,
+		AccessTokenTTL:  600,
 		JwtPrivateKey:   privateKey,
 	}}
 
@@ -149,8 +149,8 @@ func TestAuthUseCase_ValidateToken_Success(t *testing.T) {
 	assert.NoError(t, err)
 
 	mockConfig := &config.Config{Authen: config.Authen{
-		RefreshTokenTtl: 3600,
-		AccessTokenTtl:  600,
+		RefreshTokenTTL: 3600,
+		AccessTokenTTL:  600,
 		JwtPrivateKey:   privateKey,
 	}}
 
@@ -185,8 +185,8 @@ func TestAuthUseCase_ValidateToken_InvalidToken(t *testing.T) {
 	assert.NoError(t, err)
 
 	mockConfig := &config.Config{Authen: config.Authen{
-		RefreshTokenTtl: 3600,
-		AccessTokenTtl:  600,
+		RefreshTokenTTL: 3600,
+		AccessTokenTTL:  600,
 		JwtPrivateKey:   privateKey,
 	}}
 
@@ -212,8 +212,8 @@ func TestAuthUseCase_ValidateToken_ExpiredToken(t *testing.T) {
 	assert.NoError(t, err)
 
 	mockConfig := &config.Config{Authen: config.Authen{
-		RefreshTokenTtl: 3600,
-		AccessTokenTtl:  600,
+		RefreshTokenTTL: 3600,
+		AccessTokenTTL:  600,
 		JwtPrivateKey:   privateKey,
 	}}
 
@@ -248,8 +248,8 @@ func TestAuthUseCase_ValidateToken_MissingSubClaim(t *testing.T) {
 	assert.NoError(t, err)
 
 	mockConfig := &config.Config{Authen: config.Authen{
-		RefreshTokenTtl: 3600,
-		AccessTokenTtl:  600,
+		RefreshTokenTTL: 3600,
+		AccessTokenTTL:  600,
 		JwtPrivateKey:   privateKey,
 	}}
 
@@ -283,8 +283,8 @@ func TestAuthUseCase_IsRefreshTokenValidForAccessToken_Valid(t *testing.T) {
 	assert.NoError(t, err)
 
 	mockConfig := &config.Config{Authen: config.Authen{
-		RefreshTokenTtl: 3600,
-		AccessTokenTtl:  600,
+		RefreshTokenTTL: 3600,
+		AccessTokenTTL:  600,
 		JwtPrivateKey:   privateKey,
 	}}
 
@@ -292,10 +292,10 @@ func TestAuthUseCase_IsRefreshTokenValidForAccessToken_Valid(t *testing.T) {
 
 	mockUser := entity.User{ID: 1, Username: "testuser"}
 
-	accessToken, err := uc.CreateAccessToken(mockUser, mockConfig.Authen.AccessTokenTtl)
+	accessToken, err := uc.CreateAccessToken(mockUser, mockConfig.Authen.AccessTokenTTL)
 	assert.NoError(t, err)
 
-	refreshToken, err := uc.CreateRefreshToken(mockUser, accessToken, mockConfig.Authen.RefreshTokenTtl)
+	refreshToken, err := uc.CreateRefreshToken(mockUser, accessToken, mockConfig.Authen.RefreshTokenTTL)
 	assert.NoError(t, err)
 
 	isValid, err := uc.IsRefreshTokenValidForAccessToken(accessToken, refreshToken)
@@ -312,8 +312,8 @@ func TestAuthUseCase_IsRefreshTokenValidForAccessToken_InvalidJti(t *testing.T) 
 	assert.NoError(t, err)
 
 	mockConfig := &config.Config{Authen: config.Authen{
-		RefreshTokenTtl: 3600,
-		AccessTokenTtl:  600,
+		RefreshTokenTTL: 3600,
+		AccessTokenTTL:  600,
 		JwtPrivateKey:   privateKey,
 	}}
 
@@ -321,13 +321,13 @@ func TestAuthUseCase_IsRefreshTokenValidForAccessToken_InvalidJti(t *testing.T) 
 
 	mockUser := entity.User{ID: 1, Username: "testuser"}
 
-	accessToken, err := uc.CreateAccessToken(mockUser, mockConfig.Authen.AccessTokenTtl)
+	accessToken, err := uc.CreateAccessToken(mockUser, mockConfig.Authen.AccessTokenTTL)
 	assert.NoError(t, err)
 
-	refreshToken, err := uc.CreateRefreshToken(mockUser, accessToken, mockConfig.Authen.RefreshTokenTtl)
+	refreshToken, err := uc.CreateRefreshToken(mockUser, accessToken, mockConfig.Authen.RefreshTokenTTL)
 	assert.NoError(t, err)
 
-	anotherAccessToken, err := uc.CreateAccessToken(mockUser, mockConfig.Authen.AccessTokenTtl)
+	anotherAccessToken, err := uc.CreateAccessToken(mockUser, mockConfig.Authen.AccessTokenTTL)
 	assert.NoError(t, err)
 
 	isValid, err := uc.IsRefreshTokenValidForAccessToken(anotherAccessToken, refreshToken)
@@ -341,8 +341,8 @@ func TestAuthUseCase_IsRefreshTokenValidForAccessToken_ErrorRetrievingRefreshTok
 	refreshToken := "invalid_token"
 
 	mockConfig := &config.Config{Authen: config.Authen{
-		RefreshTokenTtl: 3600,
-		AccessTokenTtl:  600,
+		RefreshTokenTTL: 3600,
+		AccessTokenTTL:  600,
 	}}
 
 	uc := usecases.NewAuthUseCase(nil, nil, mockConfig)
@@ -361,8 +361,8 @@ func TestAuthUseCase_CheckAndRefreshTokens_Success(t *testing.T) {
 	assert.NoError(t, err)
 
 	mockConfig := &config.Config{Authen: config.Authen{
-		RefreshTokenTtl: 3600,
-		AccessTokenTtl:  1,
+		RefreshTokenTTL: 3600,
+		AccessTokenTTL:  1,
 		JwtPrivateKey:   privateKey,
 	}}
 
@@ -370,10 +370,10 @@ func TestAuthUseCase_CheckAndRefreshTokens_Success(t *testing.T) {
 
 	mockUser := entity.User{ID: 1, Username: "testuser"}
 
-	accessToken, err := uc.CreateAccessToken(mockUser, mockConfig.Authen.AccessTokenTtl)
+	accessToken, err := uc.CreateAccessToken(mockUser, mockConfig.Authen.AccessTokenTTL)
 	assert.NoError(t, err)
 
-	refreshToken, err := uc.CreateRefreshToken(mockUser, accessToken, mockConfig.Authen.RefreshTokenTtl)
+	refreshToken, err := uc.CreateRefreshToken(mockUser, accessToken, mockConfig.Authen.RefreshTokenTTL)
 	assert.NoError(t, err)
 
 	time.Sleep(2 * time.Second)
@@ -393,8 +393,8 @@ func TestAuthUseCase_CheckAndRefreshTokens_InvalidRefreshToken(t *testing.T) {
 	assert.NoError(t, err)
 
 	mockConfig := &config.Config{Authen: config.Authen{
-		RefreshTokenTtl: 1,
-		AccessTokenTtl:  1,
+		RefreshTokenTTL: 1,
+		AccessTokenTTL:  1,
 		JwtPrivateKey:   privateKey,
 	}}
 
@@ -402,10 +402,10 @@ func TestAuthUseCase_CheckAndRefreshTokens_InvalidRefreshToken(t *testing.T) {
 
 	mockUser := entity.User{ID: 1, Username: "testuser"}
 
-	accessToken, err := uc.CreateAccessToken(mockUser, mockConfig.Authen.AccessTokenTtl)
+	accessToken, err := uc.CreateAccessToken(mockUser, mockConfig.Authen.AccessTokenTTL)
 	assert.NoError(t, err)
 
-	refreshToken, err := uc.CreateRefreshToken(mockUser, accessToken, mockConfig.Authen.RefreshTokenTtl)
+	refreshToken, err := uc.CreateRefreshToken(mockUser, accessToken, mockConfig.Authen.RefreshTokenTTL)
 	assert.NoError(t, err)
 
 	time.Sleep(2 * time.Second)
@@ -425,8 +425,8 @@ func TestAuthUseCase_CheckAndRefreshTokens_InvalidAccessTokenJti(t *testing.T) {
 	assert.NoError(t, err)
 
 	mockConfig := &config.Config{Authen: config.Authen{
-		RefreshTokenTtl: 100,
-		AccessTokenTtl:  100,
+		RefreshTokenTTL: 100,
+		AccessTokenTTL:  100,
 		JwtPrivateKey:   privateKey,
 	}}
 
@@ -434,13 +434,13 @@ func TestAuthUseCase_CheckAndRefreshTokens_InvalidAccessTokenJti(t *testing.T) {
 
 	mockUser := entity.User{ID: 1, Username: "testuser"}
 
-	accessToken, err := uc.CreateAccessToken(mockUser, mockConfig.Authen.AccessTokenTtl)
+	accessToken, err := uc.CreateAccessToken(mockUser, mockConfig.Authen.AccessTokenTTL)
 	assert.NoError(t, err)
 
-	refreshToken, err := uc.CreateRefreshToken(mockUser, accessToken, mockConfig.Authen.RefreshTokenTtl)
+	refreshToken, err := uc.CreateRefreshToken(mockUser, accessToken, mockConfig.Authen.RefreshTokenTTL)
 	assert.NoError(t, err)
 
-	anotherAccessToken, err := uc.CreateAccessToken(mockUser, mockConfig.Authen.AccessTokenTtl)
+	anotherAccessToken, err := uc.CreateAccessToken(mockUser, mockConfig.Authen.AccessTokenTTL)
 	assert.NoError(t, err)
 
 	newAccessToken, newRefreshToken, err := uc.CheckAndRefreshTokens(anotherAccessToken, refreshToken, mockConfig)
@@ -543,8 +543,8 @@ func TestAuthUseCase_Logout_Success(t *testing.T) {
 	// Mock dependencies
 	mockContext, _ := gin.CreateTestContext(httptest.NewRecorder())
 	mockConfig := &config.Config{Authen: config.Authen{
-		AccessTokenTtl:  3600,
-		RefreshTokenTtl: 3600,
+		AccessTokenTTL:  3600,
+		RefreshTokenTTL: 3600,
 		JwtPrivateKey:   privateKey,
 	}}
 	mockContext.Set("config", mockConfig)
@@ -556,10 +556,10 @@ func TestAuthUseCase_Logout_Success(t *testing.T) {
 
 	mockUser := entity.User{ID: 1, Username: "testuser"}
 
-	accessToken, err := uc.CreateAccessToken(mockUser, mockConfig.Authen.AccessTokenTtl)
+	accessToken, err := uc.CreateAccessToken(mockUser, mockConfig.Authen.AccessTokenTTL)
 	assert.NoError(t, err)
 
-	refreshToken, err := uc.CreateRefreshToken(mockUser, accessToken, mockConfig.Authen.RefreshTokenTtl)
+	refreshToken, err := uc.CreateRefreshToken(mockUser, accessToken, mockConfig.Authen.RefreshTokenTTL)
 	assert.NoError(t, err)
 
 	// Set access and refresh tokens in headers (simulated)

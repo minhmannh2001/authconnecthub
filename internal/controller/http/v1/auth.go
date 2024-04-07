@@ -11,8 +11,6 @@ import (
 	"github.com/minhmannh2001/authconnecthub/internal/helper"
 	"github.com/minhmannh2001/authconnecthub/internal/usecases"
 	"golang.org/x/crypto/bcrypt"
-
-	_ "github.com/minhmannh2001/authconnecthub/docs"
 )
 
 type authRoutes struct {
@@ -22,6 +20,7 @@ type authRoutes struct {
 	roleUC usecases.IRoleUC
 }
 
+// NewAuthenRoutes creates new authen routes
 func NewAuthenRoutes(handler *gin.RouterGroup,
 	l *slog.Logger,
 	a usecases.IAuthUC,
@@ -217,8 +216,8 @@ func (ar *authRoutes) register(c *gin.Context) {
 	}
 
 	cfg := helper.GetConfig(c)
-	accessToken, _ := ar.authUC.CreateAccessToken(user, cfg.Authen.AccessTokenTtl)
-	refreshToken, _ := ar.authUC.CreateRefreshToken(user, accessToken, cfg.Authen.RefreshTokenTtl)
+	accessToken, _ := ar.authUC.CreateAccessToken(user, cfg.Authen.AccessTokenTTL)
+	refreshToken, _ := ar.authUC.CreateRefreshToken(user, accessToken, cfg.Authen.RefreshTokenTTL)
 
 	hashValue, err := helper.HashMap(map[string]interface{}{
 		"toast-message": "user-registered-successfully",
@@ -268,7 +267,7 @@ func (ar *authRoutes) postLogin(c *gin.Context) {
 		return
 	}
 
-	jwt_tokens, err := ar.authUC.Login(c, loginRequestBody)
+	jwtTokens, err := ar.authUC.Login(c, loginRequestBody)
 	if err != nil {
 		inputData := map[string]string{
 			"username":    loginRequestBody.Username,
@@ -288,7 +287,6 @@ func (ar *authRoutes) postLogin(c *gin.Context) {
 				"validationFail": true,
 				"validationMap":  map[string]string{},
 			})
-			return
 		} else {
 			c.HTML(http.StatusBadRequest, "toast-section", gin.H{
 				"hidden":  false,
@@ -301,8 +299,8 @@ func (ar *authRoutes) postLogin(c *gin.Context) {
 				"validationFail": true,
 				"validationMap":  map[string]string{},
 			})
-			return
 		}
+		return
 	}
 
 	saveTo := "session"
@@ -313,8 +311,8 @@ func (ar *authRoutes) postLogin(c *gin.Context) {
 	HXTriggerEvents, err := helper.MapToJSONString(map[string]interface{}{
 		"saveToken": map[string]interface{}{
 			"saveTo":       saveTo,
-			"accessToken":  jwt_tokens.AccessToken,
-			"refreshToken": jwt_tokens.RefreshToken,
+			"accessToken":  jwtTokens.AccessToken,
+			"refreshToken": jwtTokens.RefreshToken,
 		},
 	})
 	if err != nil {

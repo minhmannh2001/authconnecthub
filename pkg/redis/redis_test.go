@@ -58,3 +58,5 @@ func (suite *RedisTestSuite) TestRedisNew() {
 func TestRedisTestSuite(t *testing.T) {
 	suite.Run(t, new(RedisTestSuite))
 }
+
+// https://golang.testcontainers.org/modules/redis/

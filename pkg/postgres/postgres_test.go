@@ -104,3 +104,5 @@ func TestPostgresNew_Fail(t *testing.T) {
 func TestPostgresRepoTestSuite(t *testing.T) {
 	suite.Run(t, new(PostgresRepoTestSuite))
 }
+
+// https://testcontainers.com/guides/getting-started-with-testcontainers-for-go/

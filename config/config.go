@@ -58,8 +58,8 @@ type (
 		AdminUsername     string `env-required:"true" yaml:"admin_username"       env:"ADMIN_USERNAME"`
 		AdminEmail        string `env-required:"true" yaml:"admin_email"          env:"ADMIN_EMAIL"`
 		AdminPassword     string `env-required:"true" yaml:"admin_password"       env:"ADMIN_PASSWORD"`
-		AccessTokenTtl    int    `env-required:"true" yaml:"access_token_ttl"     env:"ACCESS_TOKEN_TTL"`
-		RefreshTokenTtl   int    `env-required:"true" yaml:"refresh_token_ttl"    env:"REFRESH_TOKEN_TTL"`
+		AccessTokenTTL    int    `env-required:"true" yaml:"access_token_ttl"     env:"ACCESS_TOKEN_TTL"`
+		RefreshTokenTTL   int    `env-required:"true" yaml:"refresh_token_ttl"    env:"REFRESH_TOKEN_TTL"`
 		JwtPrivateKeyPath string `env-required:"true" yaml:"jwt_private_key_path" env:"JWT_PRIVATE_KEY_PATH"`
 		JwtPrivateKey     *rsa.PrivateKey
 		SecretKey         string `env-required:"true" yaml:"secret_key"           env:"SECRET_KEY"`

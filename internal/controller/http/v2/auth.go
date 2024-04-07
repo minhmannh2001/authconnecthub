@@ -19,6 +19,7 @@ type authRoutes struct {
 	roleUC usecases.IRoleUC
 }
 
+// NewAuthenRoutes creates new authen routes
 func NewAuthenRoutes(handler *gin.RouterGroup,
 	l *slog.Logger,
 	a usecases.IAuthUC,
