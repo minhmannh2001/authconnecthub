@@ -9,6 +9,7 @@ import (
 	"github.com/minhmannh2001/authconnecthub/internal/entity"
 	"github.com/minhmannh2001/authconnecthub/pkg/postgres"
 	"github.com/minhmannh2001/authconnecthub/tests/testhelpers"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -61,7 +62,7 @@ func (suite *PostgresRepoTestSuite) TearDownSuite() {
 	}
 }
 
-func (suite *PostgresRepoTestSuite) TestPostgresNew() {
+func (suite *PostgresRepoTestSuite) TestPostgresNew_Success() {
 	var count int64
 	suite.repo.Conn.Model(&entity.User{}).Where("username = ?", "admin").Count(&count)
 	suite.True(count > 0)
@@ -77,6 +78,27 @@ func (suite *PostgresRepoTestSuite) TestPostgresNew() {
 
 	suite.repo.Conn.Model(&entity.Role{}).Where("name = ?", "anonymous").Count(&count)
 	suite.True(count == 1)
+}
+
+func TestPostgresNew_Fail(t *testing.T) {
+	pg, err := postgres.New(&config.Config{
+		PG: config.PG{
+			Host:     "localhost",
+			Port:     "1206",
+			Username: "postgres",
+			Password: "postgres",
+			Dbname:   "test-db",
+			Sslmode:  "disable",
+		},
+		Authen: config.Authen{
+			AdminUsername: "admin",
+			AdminPassword: "password",
+			AdminEmail:    "admin@localhost",
+		},
+	})
+
+	assert.Nil(t, pg)
+	assert.Error(t, err)
 }
 
 func TestPostgresRepoTestSuite(t *testing.T) {

@@ -71,3 +71,41 @@ func TestMapToJSONString_MarshalError(t *testing.T) {
 	expectedError := "json: unsupported type: func()"
 	assert.Equal(t, err.Error(), fmt.Sprintf("error marshalling map to JSON: %s", expectedError))
 }
+
+func TestRandStringBytes_Length(t *testing.T) {
+	// Test cases with different desired lengths
+	testCases := []struct {
+		n    int
+		want int
+	}{
+		{n: 5, want: 5},
+		{n: 10, want: 10},
+		{n: 20, want: 20},
+	}
+
+	for _, tc := range testCases {
+		result := helper.RandStringBytes(tc.n)
+		if len(result) != tc.want {
+			t.Errorf("Expected string of length %d, got %d", tc.want, len(result))
+		}
+	}
+}
+
+func TestRandStringBytes_Content(t *testing.T) {
+	const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+	// Test if the generated string contains characters from the letterBytes slice
+	result := helper.RandStringBytes(10)
+	for _, char := range result {
+		found := false
+		for _, letter := range letterBytes {
+			if char == letter {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Errorf("Generated string contains character not present in letterBytes")
+		}
+	}
+}

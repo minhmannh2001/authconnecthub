@@ -14,6 +14,7 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
+// HTTP controller
 type HTTP struct {
 	logger *slog.Logger
 	authUC usecases.IAuthUC
@@ -21,6 +22,7 @@ type HTTP struct {
 	roleUC usecases.IRoleUC
 }
 
+// New returns a new HTTP controller
 func New(l *slog.Logger, a usecases.IAuthUC, u usecases.IUserUC, r usecases.IRoleUC) *HTTP {
 	return &HTTP{
 		logger: l,

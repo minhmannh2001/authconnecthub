@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/minhmannh2001/authconnecthub/internal/entity"
+	"github.com/minhmannh2001/authconnecthub/internal/helper"
 	"github.com/minhmannh2001/authconnecthub/pkg/postgres"
 	"gorm.io/gorm"
 )
@@ -46,6 +47,11 @@ func (r *UserRepo) Delete(u entity.User) (entity.User, error) {
 
 func (r *UserRepo) FindByUsernameOrEmail(username, email string) (*entity.User, error) {
 	var user entity.User
+
+	if email == "" {
+		email = helper.RandStringBytes(24)
+	}
+
 	err := r.Conn.Where("username = ? OR email = ?", username, email).First(&user).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
