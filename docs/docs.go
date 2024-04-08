@@ -24,33 +24,30 @@ const docTemplate = `{
     "paths": {
         "/": {
             "get": {
-                "description": "This endpoint renders the index.html page with potential toast notification settings based on query parameters and validation.",
-                "consumes": [
-                    "application/json"
-                ],
+                "description": "This endpoint renders the home page of the application.",
                 "produces": [
                     "text/html"
                 ],
                 "tags": [
-                    "index"
+                    "home"
                 ],
-                "summary": "Get Index Page",
+                "summary": "Home Page",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Message to display in the toast notification",
+                        "description": "Toast message to display",
                         "name": "toast-message",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "Type of the toast notification (e.g., success, error)",
+                        "description": "Type of toast notification (e.g., success, error)",
                         "name": "toast-type",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "Hash value used for validation (optional)",
+                        "description": "Hash value for validation",
                         "name": "hash-value",
                         "in": "query"
                     }
@@ -86,9 +83,6 @@ const docTemplate = `{
         "/v1/auth/login": {
             "get": {
                 "description": "This endpoint renders the login page and displays a toast notification if provided query parameters are valid.",
-                "consumes": [
-                    "application/json"
-                ],
                 "produces": [
                     "text/html"
                 ],
@@ -131,6 +125,44 @@ const docTemplate = `{
                     "Authen"
                 ],
                 "summary": "Logout User",
+                "responses": {}
+            }
+        },
+        "/v1/dashboard/profile": {
+            "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Retrieves the profile information for the currently authenticated user.",
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "dashboard"
+                ],
+                "summary": "Get User Profile",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "The message to display in the toast notification.",
+                        "name": "toast-message",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "The type of the toast notification (e.g., success, error).",
+                        "name": "toast-type",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "A hash value used for validation.",
+                        "name": "hash-value",
+                        "in": "query"
+                    }
+                ],
                 "responses": {}
             }
         }

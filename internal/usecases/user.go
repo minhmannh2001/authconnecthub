@@ -15,7 +15,6 @@ func NewUserUseCase(ur repos.IUserRepo) *UserUseCase {
 
 func (uc *UserUseCase) Create(u entity.User) (entity.User, error) {
 	return uc.userRepo.Create(u)
-
 }
 
 func (uc *UserUseCase) FindByUsernameOrEmail(username, email string) (*entity.User, error) {

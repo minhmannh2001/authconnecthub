@@ -71,7 +71,8 @@ func (h *HTTP) registerRoutes(e *gin.Engine) {
 	groupRouter := e.Group("/v1")
 	{
 		v1.NewAuthenRoutes(groupRouter, h.logger, h.authUC, h.userUC, h.roleUC)
-		e.GET("/dashboard", dashboardHandler)
+		v1.NewDashboardRoutes(groupRouter, h.logger, h.authUC, h.userUC, h.roleUC)
+		v1.NewUserRoutes(groupRouter, h.logger, h.authUC, h.userUC, h.roleUC)
 	}
 }
 
@@ -83,7 +84,6 @@ func (h *HTTP) registerRoutes(e *gin.Engine) {
 // @Param toast-message query string false "Toast message to display"
 // @Param toast-type query string false "Type of toast notification (e.g., success, error)"
 // @Param hash-value query string false "Hash value for validation"
-// @Success 200 {object} object Response object containing HTML data
 // @Router / [GET]
 func homeHandler(c *gin.Context) {
 	queryParams := c.Request.URL.Query()
@@ -153,15 +153,5 @@ func handleNoMethod(c *gin.Context) {
 		"toastSettings": map[string]interface{}{
 			"hidden": true,
 		},
-	})
-}
-
-func dashboardHandler(c *gin.Context) {
-	c.HTML(http.StatusOK, "dashboard.html", gin.H{
-		"title": "Personal Hub",
-		"toastSettings": map[string]interface{}{
-			"hidden": true,
-		},
-		"reload": c.GetHeader("HX-Reload"),
 	})
 }

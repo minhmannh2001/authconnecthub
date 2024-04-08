@@ -51,7 +51,6 @@ func NewAuthenRoutes(handler *gin.RouterGroup,
 // @Summary Login Page
 // @Description This endpoint renders the login page and displays a toast notification if provided query parameters are valid.
 // @Tags Authen
-// @Accept json
 // @Produce html
 // @Param toast-message query string false "The message to display in the toast notification.""
 // @Param toast-type query string false "The type of the toast notification (e.g., success, error).""

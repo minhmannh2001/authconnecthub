@@ -5,7 +5,11 @@
     {{ template "dashboard_sidebar.html" . }}
     <div id="main-content" class="relative w-full h-full overflow-y-auto bg-gray-50 lg:ml-64 dark:bg-gray-900">
         <main>
-        {{ template "dashboard_user_profile.html" }}
+            {{ if eq .subPage "dashboard" }}
+                nothing here
+            {{ else if eq .subPage "profile" }}
+                {{ template "dashboard_user_profile.html" . }}
+            {{ end }}
         </main>
     </div>
 </div>

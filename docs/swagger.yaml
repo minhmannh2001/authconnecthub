@@ -14,29 +14,26 @@ info:
 paths:
   /:
     get:
-      consumes:
-      - application/json
-      description: This endpoint renders the index.html page with potential toast
-        notification settings based on query parameters and validation.
+      description: This endpoint renders the home page of the application.
       parameters:
-      - description: Message to display in the toast notification
+      - description: Toast message to display
         in: query
         name: toast-message
         type: string
-      - description: Type of the toast notification (e.g., success, error)
+      - description: Type of toast notification (e.g., success, error)
         in: query
         name: toast-type
         type: string
-      - description: Hash value used for validation (optional)
+      - description: Hash value for validation
         in: query
         name: hash-value
         type: string
       produces:
       - text/html
       responses: {}
-      summary: Get Index Page
+      summary: Home Page
       tags:
-      - index
+      - home
   /private:
     get:
       description: This endpoint is accessible only to authorized users and returns
@@ -55,8 +52,6 @@ paths:
       - private
   /v1/auth/login:
     get:
-      consumes:
-      - application/json
       description: This endpoint renders the login page and displays a toast notification
         if provided query parameters are valid.
       parameters:
@@ -88,6 +83,31 @@ paths:
       summary: Logout User
       tags:
       - Authen
+  /v1/dashboard/profile:
+    get:
+      description: Retrieves the profile information for the currently authenticated
+        user.
+      parameters:
+      - description: The message to display in the toast notification.
+        in: query
+        name: toast-message
+        type: string
+      - description: The type of the toast notification (e.g., success, error).
+        in: query
+        name: toast-type
+        type: string
+      - description: A hash value used for validation.
+        in: query
+        name: hash-value
+        type: string
+      produces:
+      - text/html
+      responses: {}
+      security:
+      - JWT: []
+      summary: Get User Profile
+      tags:
+      - dashboard
 securityDefinitions:
   JWT:
     in: header
