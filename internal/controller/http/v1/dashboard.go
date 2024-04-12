@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/minhmannh2001/authconnecthub/internal/entity"
+	"github.com/minhmannh2001/authconnecthub/internal/helper"
 	"github.com/minhmannh2001/authconnecthub/internal/usecases"
 )
 
@@ -56,19 +57,26 @@ func (dr *dashboardRoutes) getProfileHandler(c *gin.Context) {
 
 	user, err := dr.userUC.FindByUsernameOrEmail(username, "")
 	if err != nil {
-		// Handle user retrieval error
+		helper.HandleInternalError(c, err)
+		return
 	}
 
 	userInfo := prepareUserData(user)
+	socialAccounts, err := dr.userUC.GetUserSocialAccounts(username)
+	if err != nil {
+		helper.HandleInternalError(c, err)
+		return
+	}
 
 	c.HTML(http.StatusOK, "dashboard.html", gin.H{
 		"title": "Personal Hub",
 		"toastSettings": map[string]interface{}{
 			"hidden": true,
 		},
-		"subPage":  "profile",
-		"userInfo": userInfo,
-		"reload":   c.GetHeader("HX-Reload"),
+		"subPage":        "profile",
+		"userInfo":       userInfo,
+		"socialAccounts": socialAccounts,
+		"reload":         c.GetHeader("HX-Reload"),
 	})
 }
 
@@ -83,7 +91,7 @@ func prepareUserData(user *entity.User) map[string]interface{} {
 		"address":     user.UserProfile.Address,
 		"email":       user.Email,
 		"phoneNumber": user.UserProfile.PhoneNumber,
-		"birthday":    user.UserProfile.Birthday,
+		"birthday":    user.UserProfile.Birthday.Format("2006-01-02"),
 		"company":     user.UserProfile.Company,
 		"role":        user.UserProfile.Role,
 	}

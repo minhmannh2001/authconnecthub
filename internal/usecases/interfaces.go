@@ -23,10 +23,16 @@ type (
 
 	IUserUC interface {
 		Create(entity.User) (entity.User, error)
+		Update(*entity.User) error
 		FindByUsernameOrEmail(string, string) (*entity.User, error)
+		GetUserSocialAccounts(string) (map[string]entity.SocialAccount, error)
+		AddUserSocialAccounts(string, map[string]string) (bool, error)
+		RemoveUserSocialAccount(string, string) (bool, error)
 	}
 
 	IRoleUC interface {
 		GetRoleIDByName(string) (uint, error)
 	}
 )
+
+// mockery --dir=./internal/usecases --output=./internal/usecases/mocks --outpkg=mocks --all

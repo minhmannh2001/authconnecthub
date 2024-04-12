@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
+	"text/template"
 
 	"github.com/gin-gonic/gin"
 	v1 "github.com/minhmannh2001/authconnecthub/internal/controller/http/v1"
@@ -32,8 +33,16 @@ func New(l *slog.Logger, a usecases.IAuthUC, u usecases.IUserUC, r usecases.IRol
 	}
 }
 
+func capitalize(s string) string {
+	return strings.ToUpper(s[0:1]) + s[1:]
+}
+
 // Start starts the HTTP controller
 func (h *HTTP) Start(e *gin.Engine) {
+	funcMap := template.FuncMap{
+		"Capitalize": capitalize,
+	}
+	e.SetFuncMap(funcMap)
 	e.Static("/static", "./static")
 	e.LoadHTMLGlob("templates/*")
 	// Prometheus metrics

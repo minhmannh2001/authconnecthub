@@ -34,3 +34,11 @@ type UserProfile struct {
 	Gender      string     `gorm:"size:15"  json:"gender"`
 	Address     string     `gorm:"size:255" json:"address"`
 }
+
+type SocialAccount struct {
+	gorm.Model
+	UserID      uint   `gorm:"primary_key" json:"user_id"`      // Foreign key to User.ID
+	AccountType string `gorm:"size:50"     json:"account_type"` // Type of social account (e.g., "facebook", "twitter")
+	AccountLink string `gorm:"size:255"    json:"account_link"` // Link to the user's social account profile
+	ButtonState string `json:"-"`
+}

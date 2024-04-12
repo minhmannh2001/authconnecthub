@@ -11,9 +11,12 @@ type (
 	IUserRepo interface {
 		Create(entity.User) (entity.User, error)
 		RetrieveByID(uint) (entity.User, error)
-		Update(entity.User) (entity.User, error)
+		Update(*entity.User) error
 		Delete(entity.User) (entity.User, error)
 		FindByUsernameOrEmail(string, string) (*entity.User, error)
+		GetUserSocialAccounts(string) (map[string]entity.SocialAccount, error)
+		AddUserSocialAccounts(string, map[string]string) (bool, error)
+		RemoveUserSocialAccount(string, string) (bool, error)
 	}
 
 	IRoleRepo interface {

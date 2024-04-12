@@ -1,0 +1,58 @@
+{{ define "update-profile-form" }}
+<form hx-post="/v1/user/update-user-profile" target="this" hx-swap="outerHTML">
+    <div class="grid grid-cols-6 gap-6">
+        <div class="col-span-6 sm:col-span-3">
+            <label for="firstname" class="block mb-2 text-sm font-medium text-gray-900">First Name</label>
+            <input value="{{ .userInfo.firstName }}" type="text" name="firstname" id="firstname" class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">
+        </div>
+        <div class="col-span-6 sm:col-span-3">
+            <label for="lastname" class="block mb-2 text-sm font-medium text-gray-900">Last Name</label>
+            <input value="{{ .userInfo.lastName }}" type="text" name="lastname" id="lastname" class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">
+        </div>
+        <div class="col-span-6 sm:col-span-3">
+            <label for="gender" class="block mb-2 text-sm font-medium text-gray-900">Gender</label>
+            <select id="gender" name="gender" class="bg-gray-50 border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">
+                <option value="" {{ if eq .userInfo.gender "" }}selected{{ end }}>Select</option>
+                <option value="male" {{ if eq .userInfo.gender "male" }}selected{{ end }}>Male</option>
+                <option value="female" {{ if eq .userInfo.gender "female" }}selected{{ end }}>Female</option>
+                <option value="other" {{ if eq .userInfo.gender "other" }}selected{{ end }}>Other</option>
+            </select>
+        </div>
+        <div class="col-span-6 sm:col-span-3">
+            <label for="country" class="block mb-2 text-sm font-medium text-gray-900">Country</label>
+            <input value="{{ .userInfo.country }}" type="text" name="country" id="country" class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">
+        </div>
+        <div class="col-span-6 sm:col-span-3">
+            <label for="city" class="block mb-2 text-sm font-medium text-gray-900">City</label>
+            <input value="{{ .userInfo.city }}" type="text" name="city" id="city" class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">
+        </div>
+        <div class="col-span-6 sm:col-span-3">
+            <label for="address" class="block mb-2 text-sm font-medium text-gray-900">Address</label>
+            <input value="{{ .userInfo.address }}" type="text" name="address" id="address" class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">
+        </div>
+        <div class="col-span-6 sm:col-span-3">
+            <label for="email" class="block mb-2 text-sm font-medium text-gray-900">Email</label>
+            <input value="{{ .userInfo.email }}" type="email" name="email" id="email" required class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">
+        </div>
+        <div class="col-span-6 sm:col-span-3">
+            <label for="phone_number" class="block mb-2 text-sm font-medium text-gray-900">Phone Number</label>
+            <input value="{{ .userInfo.phoneNumber }}" type="text" name="phone_number" id="phone_number" class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">
+        </div>
+        <div class="col-span-6 sm:col-span-3">
+            <label for="birthday" class="block mb-2 text-sm font-medium text-gray-900">Birthday</label>
+            <input type="date" value="{{ .userInfo.birthday }}" data-date-format="DD MM YYYY" id="birthday" name="birthday" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full py-2.5">
+        </div>
+        <div class="col-span-6 sm:col-span-3">
+            <label for="company" class="block mb-2 text-sm font-medium text-gray-900">Company</label>
+            <input value="{{ .userInfo.company }}" type="text" name="company" id="company" class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">
+        </div>
+        <div class="col-span-6 sm:col-span-3">
+            <label for="role" class="block mb-2 text-sm font-medium text-gray-900">Role</label>
+            <input value="{{ .userInfo.role }}" type="text" name="role" id="role" class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">
+        </div>
+        <div class="col-span-6 sm:col-full">
+            <button class="text-white bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center" type="submit">Save all</button>
+        </div>
+    </div>
+</form>
+{{ end }}

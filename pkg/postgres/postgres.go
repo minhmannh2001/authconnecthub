@@ -62,6 +62,7 @@ func New(cfg *config.Config, opts ...Option) (*Postgres, error) {
 	pg.Conn.AutoMigrate(&entity.Role{})
 	pg.Conn.AutoMigrate(&entity.User{})
 	pg.Conn.AutoMigrate(&entity.UserProfile{})
+	pg.Conn.AutoMigrate(&entity.SocialAccount{})
 
 	err = pg.createDefaultRoles(cfg)
 	if err != nil {

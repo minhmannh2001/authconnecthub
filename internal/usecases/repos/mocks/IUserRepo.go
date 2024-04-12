@@ -12,6 +12,34 @@ type IUserRepo struct {
 	mock.Mock
 }
 
+// AddUserSocialAccounts provides a mock function with given fields: _a0, _a1
+func (_m *IUserRepo) AddUserSocialAccounts(_a0 string, _a1 map[string]string) (bool, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AddUserSocialAccounts")
+	}
+
+	var r0 bool
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string, map[string]string) (bool, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(string, map[string]string) bool); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	if rf, ok := ret.Get(1).(func(string, map[string]string) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Create provides a mock function with given fields: _a0
 func (_m *IUserRepo) Create(_a0 entity.User) (entity.User, error) {
 	ret := _m.Called(_a0)
@@ -98,6 +126,64 @@ func (_m *IUserRepo) FindByUsernameOrEmail(_a0 string, _a1 string) (*entity.User
 	return r0, r1
 }
 
+// GetUserSocialAccounts provides a mock function with given fields: _a0
+func (_m *IUserRepo) GetUserSocialAccounts(_a0 string) (map[string]entity.SocialAccount, error) {
+	ret := _m.Called(_a0)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetUserSocialAccounts")
+	}
+
+	var r0 map[string]entity.SocialAccount
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) (map[string]entity.SocialAccount, error)); ok {
+		return rf(_a0)
+	}
+	if rf, ok := ret.Get(0).(func(string) map[string]entity.SocialAccount); ok {
+		r0 = rf(_a0)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[string]entity.SocialAccount)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(_a0)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// RemoveUserSocialAccount provides a mock function with given fields: _a0, _a1
+func (_m *IUserRepo) RemoveUserSocialAccount(_a0 string, _a1 string) (bool, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RemoveUserSocialAccount")
+	}
+
+	var r0 bool
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string, string) (bool, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(string, string) bool); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	if rf, ok := ret.Get(1).(func(string, string) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // RetrieveByID provides a mock function with given fields: _a0
 func (_m *IUserRepo) RetrieveByID(_a0 uint) (entity.User, error) {
 	ret := _m.Called(_a0)
@@ -127,31 +213,21 @@ func (_m *IUserRepo) RetrieveByID(_a0 uint) (entity.User, error) {
 }
 
 // Update provides a mock function with given fields: _a0
-func (_m *IUserRepo) Update(_a0 entity.User) (entity.User, error) {
+func (_m *IUserRepo) Update(_a0 *entity.User) error {
 	ret := _m.Called(_a0)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Update")
 	}
 
-	var r0 entity.User
-	var r1 error
-	if rf, ok := ret.Get(0).(func(entity.User) (entity.User, error)); ok {
-		return rf(_a0)
-	}
-	if rf, ok := ret.Get(0).(func(entity.User) entity.User); ok {
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*entity.User) error); ok {
 		r0 = rf(_a0)
 	} else {
-		r0 = ret.Get(0).(entity.User)
+		r0 = ret.Error(0)
 	}
 
-	if rf, ok := ret.Get(1).(func(entity.User) error); ok {
-		r1 = rf(_a0)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 // NewIUserRepo creates a new instance of IUserRepo. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
