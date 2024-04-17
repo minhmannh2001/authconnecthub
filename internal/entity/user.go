@@ -22,17 +22,18 @@ type User struct {
 // User Profile model
 type UserProfile struct {
 	gorm.Model
-	UserID      uint       `gorm:"primary_key" ` // Foreign key to User.ID
-	FirstName   string     `gorm:"size:30"  json:"first_name"`
-	LastName    string     `gorm:"size:30"  json:"last_name"`
-	Country     string     `gorm:"size:50"  json:"country"`
-	City        string     `gorm:"size:50"  json:"city"`
-	PhoneNumber string     `gorm:"size:10"  json:"phone_number"`
-	Birthday    *time.Time `json:"birthday,omitempty"`
-	Company     string     `gorm:"size:255" json:"company"`
-	Role        string     `gorm:"size:30"  json:"role"`
-	Gender      string     `gorm:"size:15"  json:"gender"`
-	Address     string     `gorm:"size:255" json:"address"`
+	UserID         uint       `gorm:"primary_key" ` // Foreign key to User.ID
+	FirstName      string     `gorm:"size:30"  json:"first_name"`
+	LastName       string     `gorm:"size:30"  json:"last_name"`
+	Country        string     `gorm:"size:50"  json:"country"`
+	City           string     `gorm:"size:50"  json:"city"`
+	PhoneNumber    string     `gorm:"size:10"  json:"phone_number"`
+	Birthday       *time.Time `json:"birthday,omitempty"`
+	Company        string     `gorm:"size:255" json:"company"`
+	Role           string     `gorm:"size:30"  json:"role"`
+	Gender         string     `gorm:"size:15"  json:"gender"`
+	Address        string     `gorm:"size:255" json:"address"`
+	ProfilePicture string     `gorm:"size:255" json:"profile_picture"`
 }
 
 type SocialAccount struct {

@@ -1,8 +1,14 @@
+{{ define "user-profile-picture-in-dashboard-navbar" }}
+<img id="user-profile-picture-in-dashboard-navbar" hx-swap-oob="true" class="w-8 h-8 rounded-full" src="{{ .profilePictureURL }}" alt="user photo">
+{{ end }}
+
+{{ define "dashboard_navbar_action_menu" }}
 <div class="flex items-center ml-3">
     <div>
       <button type="button" class="flex text-sm bg-gray-800 rounded-full focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600" id="user-menu-button-2" aria-expanded="false" data-dropdown-toggle="dropdown-2">
         <span class="sr-only">Open user menu</span>
-        <img class="w-8 h-8 rounded-full" src="/static/logos/launch-64px.png" alt="user photo">
+        <img id="user-profile-picture-in-dashboard-navbar" class="w-8 h-8 rounded-full" src="{{ .profilePictureURL }}" alt="user photo">
+        {{ template "user-profile-picture-in-dashboard-navbar" . }}
       </button>
     </div>
     <!-- Dropdown menu -->
@@ -23,3 +29,4 @@
       </div>
     </div>
 </div>
+{{ end }}

@@ -26,6 +26,6 @@ authen:
   admin_email: "nguyenminhmannh2001@gmail.com"
   admin_password: "123qweA@"
   access_token_ttl: 600 # 10 mins
-  refresh_token_ttl: 86400 # 7 days
+  refresh_token_ttl: 604800 # 7 days
   jwt_private_key_path: "keys/id_rsa"
   secret_key: "mysecretkey"

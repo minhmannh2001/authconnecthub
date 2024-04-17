@@ -68,15 +68,21 @@ func (dr *dashboardRoutes) getProfileHandler(c *gin.Context) {
 		return
 	}
 
+	profilePicture := user.UserProfile.ProfilePicture
+	if profilePicture == "" {
+		profilePicture = "default.jpg"
+	}
+
 	c.HTML(http.StatusOK, "dashboard.html", gin.H{
 		"title": "Personal Hub",
 		"toastSettings": map[string]interface{}{
 			"hidden": true,
 		},
-		"subPage":        "profile",
-		"userInfo":       userInfo,
-		"socialAccounts": socialAccounts,
-		"reload":         c.GetHeader("HX-Reload"),
+		"subPage":           "profile",
+		"userInfo":          userInfo,
+		"socialAccounts":    socialAccounts,
+		"reload":            c.GetHeader("HX-Reload"),
+		"profilePictureURL": "/static/images/uploads/profile_pictures/" + profilePicture,
 	})
 }
 
