@@ -40,6 +40,7 @@ func NewUserRoutes(handler *gin.RouterGroup,
 		h.GET("/cancel-add-social-account", ur.cancelAddSocialAccountHandler)
 		h.GET("/remove-social-account", ur.removeSocialAccountHandler)
 		h.GET("/reset-upload-profile-picture-progress-section", ur.resetUploadProfilePictureProgressSectionHandler)
+		h.DELETE("/delete-profile-picture", ur.deleteProfilePictureHandler)
 	}
 }
 
@@ -276,6 +277,38 @@ func (ur *userRoutes) uploadProfilePictureHandler(c *gin.Context) {
 
 func (ur *userRoutes) resetUploadProfilePictureProgressSectionHandler(c *gin.Context) {
 	c.HTML(http.StatusOK, "upload-profile-picture-progress-section-wrapper", gin.H{})
+}
+
+func (ur *userRoutes) deleteProfilePictureHandler(c *gin.Context) {
+	c.Header("HX-Reswap", "none")
+	user, _ := ur.userUC.FindByUsernameOrEmail(c.GetString("username"), "")
+	err := os.Remove("./static/images/uploads/profile_pictures/" + user.UserProfile.ProfilePicture)
+	if err != nil {
+		c.HTML(http.StatusBadRequest, "new-toast-section", gin.H{
+			"type":    "danger",
+			"message": "Oops! An error occurred. Please try again later.",
+		})
+		return
+	}
+	user.UserProfile.ProfilePicture = ""
+	err = ur.userUC.Update(user)
+	if err != nil {
+		c.HTML(http.StatusBadRequest, "new-toast-section", gin.H{
+			"type":    "danger",
+			"message": "Oops! An error occurred. Please try again later.",
+		})
+		return
+	}
+	c.HTML(http.StatusOK, "user-profile-picture-in-dashboard-navbar", gin.H{
+		"profilePictureURL": "/static/images/uploads/profile_pictures/default.jpg",
+	})
+	c.HTML(http.StatusOK, "user-profile-picture", gin.H{
+		"profilePictureURL": "/static/images/uploads/profile_pictures/default.jpg",
+	})
+	c.HTML(http.StatusOK, "new-toast-section", gin.H{
+		"type":    "success",
+		"message": "Profile picture deleted successfully!",
+	})
 }
 
 func (ur *userRoutes) addSocialAccountHandler(c *gin.Context) {
