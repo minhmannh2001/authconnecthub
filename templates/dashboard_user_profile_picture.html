@@ -24,7 +24,7 @@
     {{ if .failReason }}
         <div class="text-xs mt-1">{{ .failReason }}</div>
     {{ else }}
-        <div class="text-xs mt-1">{{ .fileSize }} MB of {{ .fileSize }} MB</div>
+        <div class="text-xs mt-1">{{ .fileSize }} of {{ .fileSize }}</div>
     {{ end }}
 </div>
 {{ end }}
@@ -56,8 +56,34 @@
 <button id="upload-profile-picture-modal-done-button" hx-get="/v1/user/reset-upload-profile-picture-progress-section" hx-target="#upload-profile-picture-progress-section-wrapper" hx-swap="outerHTML" hx-swap-oob="true" type="button" @click="$event.target.setAttribute('disabled', '');$event.target.classList.add('cursor-not-allowed')" onclick="document.getElementById('upload-profile-picture-modal-close-button').click()" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">Done</button>
 {{ end }}
 
+{{ define "pseudo-upload-profile-picture-progress-section" }}
+<div class="flex-col w-full {{ if .uploading }} {{ else }} htmx-indicator {{ end }}" id="pseudo-upload-profile-picture-progress-section" hx-get="/v1/user/progress-of-upload-profile-picture" hx-swap="outerHTML" {{ if .uploading }} hx-trigger="every 50ms" {{ else }} hx-trigger="input from:#upload-profile-picture-file" {{ end }}>
+    <div class="flex items-center mt-6">
+        {{ if eq .fileFormat "default" }}
+            <img class="mr-4" style="width: 28px; height: 28px;" src="/static/images/file_formats/default-file-format-32px.png" alt="jpg-file-format">
+        {{ else if eq .fileFormat "jpeg" }}
+            <img class="mr-4" style="width: 28px; height: 28px;" src="/static/images/file_formats/jpg-file-format-32px.png" alt="jpg-file-format">
+        {{ else if eq .fileFormat "png" }}
+            <img class="mr-4" style="width: 28px; height: 28px;" src="/static/images/file_formats/png-file-format-32px.png" alt="jpg-file-format">
+        {{ else if eq .fileFormat "gif" }}
+            <img class="mr-4" style="width: 28px; height: 28px;" src="/static/images/file_formats/gif-file-format-32px.png" alt="jpg-file-format">
+        {{ end }}
+        <div class="flex-col w-full">
+            <div class="flex justify-between mb-1">
+                <span class="text-xs font-medium">Flowbite</span>
+                <span class="text-xs font-medium text-blue-700">Uploading... {{ .currentPercent }}%</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2">
+                <div class="bg-blue-600 h-2 rounded-full" style="width: {{ .currentPercent }}%"></div>
+            </div>
+            <div class="text-xs mt-1">{{ .currentUploadedSize }} of {{ .totalSize }}</div>
+        </div>
+    </div>
+</div>
+{{ end }}
+
 {{ define "upload-profile-picture-modal" }}
-<div id="upload-profile-picture-modal" tabindex="-1" aria-hidden="true" class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+<div id="upload-profile-picture-modal" data-modal-backdrop="static" tabindex="-1" aria-hidden="true" class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
     <div class="relative p-4 w-full max-w-md max-h-full">
         <!-- Modal content -->
         <div class="relative bg-white rounded-lg shadow">
@@ -85,6 +111,7 @@
                 </div>
 
                 {{ template "upload-profile-picture-progress-section-wrapper"}}
+                {{ template "pseudo-upload-profile-picture-progress-section" }}
                 <div class="flex items-center mt-6 space-x-4 rtl:space-x-reverse">
                     <button id="upload-profile-picture-modal-done-button" type="button" disabled class="cursor-not-allowed text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">Done</button>
                     <button data-modal-hide="upload-profile-picture-modal" hx-get="/v1/user/reset-upload-profile-picture-progress-section" hx-target="#upload-profile-picture-progress-section-wrapper" hx-swap="outerHTML" type="button" class="py-2.5 px-5 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100">Cancel</button>

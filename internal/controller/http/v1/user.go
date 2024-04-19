@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sync"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/minhmannh2001/authconnecthub/internal/dto"
@@ -22,6 +24,7 @@ type userRoutes struct {
 	authUC usecases.IAuthUC
 	userUC usecases.IUserUC
 	roleUC usecases.IRoleUC
+	store  sync.Map
 }
 
 func NewUserRoutes(handler *gin.RouterGroup,
@@ -30,12 +33,13 @@ func NewUserRoutes(handler *gin.RouterGroup,
 	u usecases.IUserUC,
 	r usecases.IRoleUC,
 ) {
-	ur := &userRoutes{l, a, u, r}
+	ur := &userRoutes{l, a, u, r, sync.Map{}}
 
 	h := handler.Group("/user")
 	{
 		h.POST("/update-user-profile", ur.updateUserProfileHandler)
 		h.POST("/upload-profile-picture", ur.uploadProfilePictureHandler)
+		h.GET("/progress-of-upload-profile-picture", ur.getProgressOfUploadProfilePictureHandler)
 		h.POST("/add-social-account", ur.addSocialAccountHandler)
 		h.GET("/cancel-add-social-account", ur.cancelAddSocialAccountHandler)
 		h.GET("/remove-social-account", ur.removeSocialAccountHandler)
@@ -101,6 +105,29 @@ func (ur *userRoutes) updateUserProfileHandler(c *gin.Context) {
 	})
 }
 
+func (ur *userRoutes) getProgressOfUploadProfilePictureHandler(c *gin.Context) {
+	progress, _ := ur.store.Load(c.GetString("username") + "upload-profile-picture-progress")
+	if progress == nil {
+		// Loop until progress is not nil
+		for progress == nil {
+			// Implement waiting logic here
+			time.Sleep(time.Millisecond * 50)
+			progress, _ = ur.store.Load(c.GetString("username") + "upload-profile-picture-progress") // Re-check the progress value
+		}
+	}
+	progressMap := progress.(map[string]interface{})
+	c.HTML(http.StatusOK, "pseudo-upload-profile-picture-progress-section", gin.H{
+		"fileFormat":          progressMap["fileFormat"].(string),
+		"currentPercent":      progressMap["currentPercent"].(int),
+		"currentUploadedSize": progressMap["currentUploadedSize"].(string),
+		"totalSize":           progressMap["totalSize"].(string),
+		"uploading":           progressMap["uploading"].(bool),
+	})
+	if !progressMap["uploading"].(bool) {
+		ur.store.Delete(c.GetString("username") + "upload-profile-picture-progress")
+	}
+}
+
 func (ur *userRoutes) uploadProfilePictureHandler(c *gin.Context) {
 	file, fileHeader, err := c.Request.FormFile("upload-profile-picture-file")
 	if err != nil {
@@ -117,6 +144,17 @@ func (ur *userRoutes) uploadProfilePictureHandler(c *gin.Context) {
 	}
 
 	defer file.Close()
+
+	for i := 0; i <= 10; i++ {
+		time.Sleep(10 * time.Millisecond)
+		ur.store.Store(c.GetString("username")+"upload-profile-picture-progress", map[string]interface{}{
+			"fileFormat":          "default",
+			"currentPercent":      i,
+			"currentUploadedSize": "0",
+			"totalSize":           helper.FormatFileSize(float64(fileHeader.Size), 1024.0),
+			"uploading":           true,
+		})
+	}
 
 	buff := make([]byte, 512)
 	_, err = file.Read(buff)
@@ -147,6 +185,17 @@ func (ur *userRoutes) uploadProfilePictureHandler(c *gin.Context) {
 		return
 	}
 
+	for i := 11; i <= 20; i++ {
+		time.Sleep(10 * time.Millisecond)
+		ur.store.Store(c.GetString("username")+"upload-profile-picture-progress", map[string]interface{}{
+			"fileFormat":          filetype[6:],
+			"currentPercent":      i,
+			"currentUploadedSize": "0",
+			"totalSize":           helper.FormatFileSize(float64(fileHeader.Size), 1024.0),
+			"uploading":           true,
+		})
+	}
+
 	// Set maximum upload size
 	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, MAX_UPLOAD_SIZE)
 
@@ -163,6 +212,17 @@ func (ur *userRoutes) uploadProfilePictureHandler(c *gin.Context) {
 			"failReason": "File is too large (max. 2MB)",
 		})
 		return
+	}
+
+	for i := 21; i <= 30; i++ {
+		time.Sleep(10 * time.Millisecond)
+		ur.store.Store(c.GetString("username")+"upload-profile-picture-progress", map[string]interface{}{
+			"fileFormat":          filetype[6:],
+			"currentPercent":      i,
+			"currentUploadedSize": "0",
+			"totalSize":           helper.FormatFileSize(float64(fileHeader.Size), 1024.0),
+			"uploading":           true,
+		})
 	}
 
 	_, err = file.Seek(0, io.SeekStart)
@@ -217,6 +277,8 @@ func (ur *userRoutes) uploadProfilePictureHandler(c *gin.Context) {
 	defer dst.Close()
 
 	pr := &helper.Progress{
+		Store:     &ur.store,
+		Username:  c.GetString("username"),
 		TotalSize: fileHeader.Size,
 	}
 
@@ -271,6 +333,13 @@ func (ur *userRoutes) uploadProfilePictureHandler(c *gin.Context) {
 		"fileName":   fileHeader.Filename,
 		"failReason": "",
 		"fileSize":   helper.FormatFileSize(float64(fileHeader.Size), 1024.0),
+	})
+	ur.store.Store(c.GetString("username")+"upload-profile-picture-progress", map[string]interface{}{
+		"fileFormat":          "default",
+		"currentPercent":      100,
+		"currentUploadedSize": helper.FormatFileSize(float64(fileHeader.Size), 1024.0),
+		"totalSize":           helper.FormatFileSize(float64(fileHeader.Size), 1024.0),
+		"uploading":           false,
 	})
 	c.HTML(http.StatusOK, "upload-profile-picture-modal-done-button", gin.H{})
 }
