@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/minhmannh2001/authconnecthub/internal/dto"
 	"github.com/minhmannh2001/authconnecthub/internal/entity"
 	"github.com/minhmannh2001/authconnecthub/internal/helper"
@@ -116,12 +117,15 @@ func (ur *userRoutes) getProgressOfUploadProfilePictureHandler(c *gin.Context) {
 		}
 	}
 	progressMap := progress.(map[string]interface{})
-	c.HTML(http.StatusOK, "pseudo-upload-profile-picture-progress-section", gin.H{
+	c.HTML(http.StatusOK, "upload-profile-picture-progress-section", gin.H{
+		"uuid":                uuid.New().String(),
 		"fileFormat":          progressMap["fileFormat"].(string),
+		"fileName":            progressMap["fileName"].(string),
 		"currentPercent":      progressMap["currentPercent"].(int),
 		"currentUploadedSize": progressMap["currentUploadedSize"].(string),
 		"totalSize":           progressMap["totalSize"].(string),
 		"uploading":           progressMap["uploading"].(bool),
+		"finish":              progressMap["uploading"].(bool),
 	})
 	if !progressMap["uploading"].(bool) {
 		ur.store.Delete(c.GetString("username") + "upload-profile-picture-progress")
@@ -129,6 +133,8 @@ func (ur *userRoutes) getProgressOfUploadProfilePictureHandler(c *gin.Context) {
 }
 
 func (ur *userRoutes) uploadProfilePictureHandler(c *gin.Context) {
+	c.HTML(http.StatusOK, "upload-profile-picture-modal-done-button", gin.H{})
+
 	file, fileHeader, err := c.Request.FormFile("upload-profile-picture-file")
 	if err != nil {
 		c.HTML(http.StatusBadRequest, "new-toast-section", gin.H{
@@ -139,6 +145,8 @@ func (ur *userRoutes) uploadProfilePictureHandler(c *gin.Context) {
 			"fileFormat": "default",
 			"fileName":   "uploaded file",
 			"failReason": "Internal server error",
+			"uploading":  false,
+			"finish":     true,
 		})
 		return
 	}
@@ -149,10 +157,12 @@ func (ur *userRoutes) uploadProfilePictureHandler(c *gin.Context) {
 		time.Sleep(10 * time.Millisecond)
 		ur.store.Store(c.GetString("username")+"upload-profile-picture-progress", map[string]interface{}{
 			"fileFormat":          "default",
+			"fileName":            fileHeader.Filename,
 			"currentPercent":      i,
 			"currentUploadedSize": "0",
 			"totalSize":           helper.FormatFileSize(float64(fileHeader.Size), 1024.0),
 			"uploading":           true,
+			"finish":              false,
 		})
 	}
 
@@ -181,6 +191,8 @@ func (ur *userRoutes) uploadProfilePictureHandler(c *gin.Context) {
 			"fileFormat": "default",
 			"fileName":   fileHeader.Filename,
 			"failReason": "Invalid file format",
+			"uploading":  false,
+			"finish":     true,
 		})
 		return
 	}
@@ -189,10 +201,12 @@ func (ur *userRoutes) uploadProfilePictureHandler(c *gin.Context) {
 		time.Sleep(10 * time.Millisecond)
 		ur.store.Store(c.GetString("username")+"upload-profile-picture-progress", map[string]interface{}{
 			"fileFormat":          filetype[6:],
+			"fileName":            fileHeader.Filename,
 			"currentPercent":      i,
 			"currentUploadedSize": "0",
 			"totalSize":           helper.FormatFileSize(float64(fileHeader.Size), 1024.0),
 			"uploading":           true,
+			"finish":              false,
 		})
 	}
 
@@ -210,6 +224,8 @@ func (ur *userRoutes) uploadProfilePictureHandler(c *gin.Context) {
 			"fileFormat": filetype[6:],
 			"fileName":   fileHeader.Filename,
 			"failReason": "File is too large (max. 2MB)",
+			"uploading":  false,
+			"finish":     true,
 		})
 		return
 	}
@@ -218,10 +234,12 @@ func (ur *userRoutes) uploadProfilePictureHandler(c *gin.Context) {
 		time.Sleep(10 * time.Millisecond)
 		ur.store.Store(c.GetString("username")+"upload-profile-picture-progress", map[string]interface{}{
 			"fileFormat":          filetype[6:],
+			"fileName":            fileHeader.Filename,
 			"currentPercent":      i,
 			"currentUploadedSize": "0",
 			"totalSize":           helper.FormatFileSize(float64(fileHeader.Size), 1024.0),
 			"uploading":           true,
+			"finish":              false,
 		})
 	}
 
@@ -235,6 +253,8 @@ func (ur *userRoutes) uploadProfilePictureHandler(c *gin.Context) {
 			"fileFormat": filetype[6:],
 			"fileName":   fileHeader.Filename,
 			"failReason": "Internal server error",
+			"uploading":  false,
+			"finish":     true,
 		})
 		return
 	}
@@ -251,6 +271,8 @@ func (ur *userRoutes) uploadProfilePictureHandler(c *gin.Context) {
 			"fileFormat": filetype[6:],
 			"fileName":   fileHeader.Filename,
 			"failReason": "Internal server error",
+			"uploading":  false,
+			"finish":     true,
 		})
 		return
 	}
@@ -270,6 +292,8 @@ func (ur *userRoutes) uploadProfilePictureHandler(c *gin.Context) {
 			"fileFormat": filetype[6:],
 			"fileName":   fileHeader.Filename,
 			"failReason": "Internal server error",
+			"uploading":  false,
+			"finish":     true,
 		})
 		return
 	}
@@ -279,6 +303,7 @@ func (ur *userRoutes) uploadProfilePictureHandler(c *gin.Context) {
 	pr := &helper.Progress{
 		Store:     &ur.store,
 		Username:  c.GetString("username"),
+		Filename:  fileHeader.Filename,
 		TotalSize: fileHeader.Size,
 	}
 
@@ -294,6 +319,8 @@ func (ur *userRoutes) uploadProfilePictureHandler(c *gin.Context) {
 			"fileFormat": filetype[6:],
 			"fileName":   fileHeader.Filename,
 			"failReason": "Internal server error",
+			"uploading":  false,
+			"finish":     true,
 		})
 		return
 	}
@@ -311,6 +338,8 @@ func (ur *userRoutes) uploadProfilePictureHandler(c *gin.Context) {
 				"fileFormat": filetype[6:],
 				"fileName":   fileHeader.Filename,
 				"failReason": "Internal server error",
+				"uploading":  false,
+				"finish":     true,
 			})
 			return
 		}
@@ -328,18 +357,20 @@ func (ur *userRoutes) uploadProfilePictureHandler(c *gin.Context) {
 		"type":    "success",
 		"message": successMessage,
 	})
-	c.HTML(http.StatusOK, "upload-profile-picture-progress-section", gin.H{
-		"fileFormat": filetype[6:],
-		"fileName":   fileHeader.Filename,
-		"failReason": "",
-		"fileSize":   helper.FormatFileSize(float64(fileHeader.Size), 1024.0),
-	})
+	// c.HTML(http.StatusOK, "upload-profile-picture-progress-section", gin.H{
+	// 	"fileFormat": filetype[6:],
+	// 	"fileName":   fileHeader.Filename,
+	// 	"failReason": "",
+	// 	"fileSize":   helper.FormatFileSize(float64(fileHeader.Size), 1024.0),
+	// })
 	ur.store.Store(c.GetString("username")+"upload-profile-picture-progress", map[string]interface{}{
-		"fileFormat":          "default",
+		"fileFormat":          filetype[6:],
+		"fileName":            fileHeader.Filename,
 		"currentPercent":      100,
 		"currentUploadedSize": helper.FormatFileSize(float64(fileHeader.Size), 1024.0),
 		"totalSize":           helper.FormatFileSize(float64(fileHeader.Size), 1024.0),
 		"uploading":           false,
+		"finish":              true,
 	})
 	c.HTML(http.StatusOK, "upload-profile-picture-modal-done-button", gin.H{})
 }
@@ -477,3 +508,6 @@ func (ur *userRoutes) removeSocialAccountHandler(c *gin.Context) {
 		ButtonState: "cancel",
 	})
 }
+
+// https://celery.school/celery-progress-bars-with-fastapi-htmx
+// https://freshman.tech/file-upload-golang/

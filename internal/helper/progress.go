@@ -12,6 +12,7 @@ import (
 type Progress struct {
 	Store     *sync.Map
 	Username  string
+	Filename  string
 	TotalSize int64
 	BytesRead int64
 }
@@ -35,15 +36,17 @@ func (pr *Progress) Print() {
 		return
 	}
 
-	fmt.Printf("File upload in progress: %d\n", pr.BytesRead)
+	fmt.Printf("File upload in progress: %d - %d%%\n", pr.BytesRead, 30+int(math.Floor(float64(pr.BytesRead)*70.0/float64(pr.TotalSize))))
 }
 
 func (pr *Progress) SaveToRedis() {
 	pr.Store.Store(pr.Username+"upload-profile-picture-progress", map[string]interface{}{
 		"fileFormat":          "default",
+		"fileName":            pr.Filename,
 		"currentPercent":      30 + int(math.Floor(float64(pr.BytesRead)*70.0/float64(pr.TotalSize))),
 		"currentUploadedSize": FormatFileSize(float64(pr.BytesRead), 1024.0),
 		"totalSize":           FormatFileSize(float64(pr.TotalSize), 1024.0),
 		"uploading":           true,
+		"finish":              false,
 	})
 }
