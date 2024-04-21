@@ -74,8 +74,6 @@ func (h *HTTP) registerRoutes(e *gin.Engine) {
 		})
 	})
 
-	e.GET("/private", privateHandler)
-
 	// Routers
 	groupRouter := e.Group("/v1")
 	{
@@ -125,17 +123,6 @@ func homeHandler(c *gin.Context) {
 		"reload":        c.GetHeader("HX-Reload"),
 		"userInfo":      userInfo,
 	})
-}
-
-// @Summary Access a private resource
-// @Description This endpoint is accessible only to authorized users and returns a greeting message.
-// @Tags private
-// @Security JWT
-// @Produce json
-// @Success 200 {string} Hello message
-// @router /private [GET]
-func privateHandler(c *gin.Context) {
-	c.JSON(http.StatusOK, "Hello. You are in private path")
 }
 
 func handleInternalServerError(c *gin.Context) {

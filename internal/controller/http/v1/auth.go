@@ -81,6 +81,12 @@ func (ar *authRoutes) getLogin(c *gin.Context) {
 	})
 }
 
+// @Summary User Registration
+// @Description Registers a new user on the system.
+// @Tags Authen
+// @Consumes json
+// @Produce html
+// @router /v1/auth/register [POST]
 func (ar *authRoutes) register(c *gin.Context) {
 	var registerRequestBody dto.RegisterRequestBody
 
@@ -237,14 +243,24 @@ func (ar *authRoutes) register(c *gin.Context) {
 	c.Header("HX-Redirect", fmt.Sprintf("/?toast-message=user-registered-successfully&toast-type=%s&hash-value=%s", dto.ToastTypeSuccess, hashValue))
 }
 
+// @Summary User Login
+// @Description Logs in a user with the provided credentials.
+// @Tags Authen
+// @Consumes json
+// @Produce html
+// @router /v1/auth/login [POST]
 func (ar *authRoutes) postLogin(c *gin.Context) {
 	var loginRequestBody dto.LoginRequestBody
+
+	ar.logger.Info("Handling login request", slog.String("method", "POST"), slog.String("path", "/v1/auth/login"))
 
 	if err := c.ShouldBind(&loginRequestBody); err != nil {
 		ar.logger.Error("Validation error", slog.Any("err", err))
 		// generate validation errors response
 		validationMap := helper.GenerateValidationMap(err)
 		_ = validationMap
+
+		ar.logger.Info("Validation failed", slog.Any("validationMap", validationMap))
 
 		c.HTML(http.StatusBadRequest, "toast-section", gin.H{
 			"hidden":  false,
@@ -266,6 +282,8 @@ func (ar *authRoutes) postLogin(c *gin.Context) {
 		return
 	}
 
+	ar.logger.Info("Validation passed", slog.Any("loginRequestBody", loginRequestBody))
+
 	jwtTokens, err := ar.authUC.Login(c, loginRequestBody)
 	if err != nil {
 		inputData := map[string]string{
@@ -275,6 +293,8 @@ func (ar *authRoutes) postLogin(c *gin.Context) {
 		}
 
 		if helper.IsErrOfType(err, &entity.InvalidCredentialsError{}) {
+			ar.logger.Info("Invalid credentials", slog.Any("err", err))
+
 			c.HTML(http.StatusBadRequest, "toast-section", gin.H{
 				"hidden":  false,
 				"type":    dto.ToastTypeDanger,
@@ -287,6 +307,8 @@ func (ar *authRoutes) postLogin(c *gin.Context) {
 				"validationMap":  map[string]string{},
 			})
 		} else {
+			ar.logger.Error("Unexpected error", slog.Any("err", err))
+
 			c.HTML(http.StatusBadRequest, "toast-section", gin.H{
 				"hidden":  false,
 				"type":    dto.ToastTypeDanger,

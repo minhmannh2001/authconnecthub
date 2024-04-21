@@ -34,22 +34,6 @@ paths:
       summary: Home Page
       tags:
       - home
-  /private:
-    get:
-      description: This endpoint is accessible only to authorized users and returns
-        a greeting message.
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            type: string
-      security:
-      - JWT: []
-      summary: Access a private resource
-      tags:
-      - private
   /v1/auth/login:
     get:
       description: This endpoint renders the login page and displays a toast notification
@@ -73,6 +57,14 @@ paths:
       summary: Login Page
       tags:
       - Authen
+    post:
+      description: Logs in a user with the provided credentials.
+      produces:
+      - text/html
+      responses: {}
+      summary: User Login
+      tags:
+      - Authen
   /v1/auth/logout:
     get:
       description: Logs out the currently authenticated user and redirects to the
@@ -83,6 +75,26 @@ paths:
       summary: Logout User
       tags:
       - Authen
+  /v1/auth/register:
+    post:
+      description: Registers a new user on the system.
+      produces:
+      - text/html
+      responses: {}
+      summary: User Registration
+      tags:
+      - Authen
+  /v1/dashboard:
+    get:
+      description: Retrieves the dashboard data for the currently authenticated user.
+      produces:
+      - text/html
+      responses: {}
+      security:
+      - JWT: []
+      summary: Get Dashboard Data
+      tags:
+      - Dashboard
   /v1/dashboard/profile:
     get:
       description: Retrieves the profile information for the currently authenticated
@@ -107,7 +119,129 @@ paths:
       - JWT: []
       summary: Get User Profile
       tags:
-      - dashboard
+      - Dashboard
+  /v1/user/add-social-account:
+    post:
+      description: Adds a social media account to the currently authenticated user's
+        profile.
+      produces:
+      - text/html
+      responses: {}
+      security:
+      - JWT: []
+      summary: Add Social Account
+      tags:
+      - User
+  /v1/user/cancel-add-social-account:
+    get:
+      description: Cancels the process of adding a social media account to the user's
+        profile.
+      produces:
+      - text/html
+      responses: {}
+      security:
+      - JWT: []
+      summary: Cancel Add Social Account
+      tags:
+      - User
+  /v1/user/delete-profile-picture:
+    delete:
+      description: Deletes the currently authenticated user's profile picture.
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: ""
+        "400":
+          description: Bad Request
+          schema:
+            type: ""
+      security:
+      - JWT: []
+      summary: Delete Profile Picture
+      tags:
+      - User
+  /v1/user/progress-of-upload-profile-picture:
+    get:
+      description: Retrieves the upload progress for the currently ongoing profile
+        picture upload (if any).
+      produces:
+      - text/html
+      responses: {}
+      security:
+      - JWT: []
+      summary: Get Profile Picture Upload Progress
+      tags:
+      - User
+  /v1/user/remove-social-account:
+    get:
+      description: Removes a social media account from the currently authenticated
+        user's profile.
+      parameters:
+      - description: Username of the authenticated user
+        in: query
+        name: username
+        required: true
+        type: string
+      - description: The type of social account to remove (e.g., facebook, twitter)
+        in: query
+        name: type
+        required: true
+        type: string
+      produces:
+      - text/html
+      responses: {}
+      security:
+      - JWT: []
+      summary: Remove Social Account
+      tags:
+      - User
+  /v1/user/reset-upload-profile-picture-progress-section:
+    get:
+      description: Resets the upload profile picture progress section on the frontend.
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: ""
+      security:
+      - JWT: []
+      summary: Reset Upload Profile Picture Progress Section
+      tags:
+      - User
+  /v1/user/update-user-profile:
+    post:
+      description: Updates the profile information for the currently authenticated
+        user.
+      produces:
+      - text/html
+      responses: {}
+      security:
+      - JWT: []
+      summary: Update User Profile
+      tags:
+      - User
+  /v1/user/upload-profile-picture:
+    post:
+      description: Uploads a new profile picture for the currently authenticated user.
+      parameters:
+      - description: The profile picture file to upload
+        in: formData
+        name: upload-profile-picture-file
+        required: true
+        type: file
+      produces:
+      - text/html
+      responses: {}
+      security:
+      - JWT: []
+      summary: Upload Profile Picture
+      tags:
+      - User
 securityDefinitions:
   JWT:
     in: header

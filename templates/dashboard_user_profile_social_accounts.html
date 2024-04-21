@@ -1,9 +1,7 @@
 {{ define "add-account-button" }}
 <div class="inline-flex items-center">
     <button hx-post="/v1/user/add-social-account?type={{.AccountType}}" hx-target="#{{ .AccountType }}-account-section" id="add-{{.AccountType}}-btn" hx-include="[name='{{.AccountType}}-link']" hx-trigger="add-{{.AccountType}}-event from:document" @click="open=!open; if (!open) {htmx.trigger('#add-{{.AccountType}}-btn', 'add-{{.AccountType}}-event')}" x-text="open ? 'Save' : 'Add'" class="px-3 py-2 mb-3 mr-3 text-sm font-medium text-center text-white rounded-lg bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:ring-primary-300">Add</button>
-    {{ if eq .ButtonState "save" }}
-        <button hx-get="/v1/user/cancel-add-social-account?type={{.AccountType}}" hx-target="#{{ .AccountType }}-account-section" class="px-3 py-2 mb-3 mr-3 text-sm font-medium text-center text-white rounded-lg bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300">Cancel</button>
-    {{ end }}
+    <button x-show="open" hx-get="/v1/user/cancel-add-social-account?type={{.AccountType}}" hx-target="#{{ .AccountType }}-account-section" class="px-3 py-2 mb-3 mr-3 text-sm font-medium text-center text-white rounded-lg bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300">Cancel</button>
 </div>
 {{ end }}
 

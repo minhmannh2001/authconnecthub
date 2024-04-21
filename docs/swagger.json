@@ -49,31 +49,6 @@
                 "responses": {}
             }
         },
-        "/private": {
-            "get": {
-                "security": [
-                    {
-                        "JWT": []
-                    }
-                ],
-                "description": "This endpoint is accessible only to authorized users and returns a greeting message.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "private"
-                ],
-                "summary": "Access a private resource",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
         "/v1/auth/login": {
             "get": {
                 "description": "This endpoint renders the login page and displays a toast notification if provided query parameters are valid.",
@@ -105,6 +80,17 @@
                     }
                 ],
                 "responses": {}
+            },
+            "post": {
+                "description": "Logs in a user with the provided credentials.",
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "Authen"
+                ],
+                "summary": "User Login",
+                "responses": {}
             }
         },
         "/v1/auth/logout": {
@@ -122,6 +108,37 @@
                 "responses": {}
             }
         },
+        "/v1/auth/register": {
+            "post": {
+                "description": "Registers a new user on the system.",
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "Authen"
+                ],
+                "summary": "User Registration",
+                "responses": {}
+            }
+        },
+        "/v1/dashboard": {
+            "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Retrieves the dashboard data for the currently authenticated user.",
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "Dashboard"
+                ],
+                "summary": "Get Dashboard Data",
+                "responses": {}
+            }
+        },
         "/v1/dashboard/profile": {
             "get": {
                 "security": [
@@ -134,7 +151,7 @@
                     "text/html"
                 ],
                 "tags": [
-                    "dashboard"
+                    "Dashboard"
                 ],
                 "summary": "Get User Profile",
                 "parameters": [
@@ -155,6 +172,195 @@
                         "description": "A hash value used for validation.",
                         "name": "hash-value",
                         "in": "query"
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v1/user/add-social-account": {
+            "post": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Adds a social media account to the currently authenticated user's profile.",
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Add Social Account",
+                "responses": {}
+            }
+        },
+        "/v1/user/cancel-add-social-account": {
+            "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Cancels the process of adding a social media account to the user's profile.",
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Cancel Add Social Account",
+                "responses": {}
+            }
+        },
+        "/v1/user/delete-profile-picture": {
+            "delete": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Deletes the currently authenticated user's profile picture.",
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Delete Profile Picture",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": ""
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": ""
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/user/progress-of-upload-profile-picture": {
+            "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Retrieves the upload progress for the currently ongoing profile picture upload (if any).",
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Get Profile Picture Upload Progress",
+                "responses": {}
+            }
+        },
+        "/v1/user/remove-social-account": {
+            "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Removes a social media account from the currently authenticated user's profile.",
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Remove Social Account",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Username of the authenticated user",
+                        "name": "username",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "The type of social account to remove (e.g., facebook, twitter)",
+                        "name": "type",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/v1/user/reset-upload-profile-picture-progress-section": {
+            "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Resets the upload profile picture progress section on the frontend.",
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Reset Upload Profile Picture Progress Section",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": ""
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/user/update-user-profile": {
+            "post": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Updates the profile information for the currently authenticated user.",
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Update User Profile",
+                "responses": {}
+            }
+        },
+        "/v1/user/upload-profile-picture": {
+            "post": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Uploads a new profile picture for the currently authenticated user.",
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Upload Profile Picture",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "The profile picture file to upload",
+                        "name": "upload-profile-picture-file",
+                        "in": "formData",
+                        "required": true
                     }
                 ],
                 "responses": {}

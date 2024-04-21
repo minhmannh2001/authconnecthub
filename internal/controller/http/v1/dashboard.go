@@ -32,15 +32,12 @@ func NewDashboardRoutes(handler *gin.RouterGroup,
 	}
 }
 
-// @Summary Get User Profile
-// @Description Retrieves the profile information for the currently authenticated user.
-// @Tags dashboard
+// @Summary Get Dashboard Data
+// @Description Retrieves the dashboard data for the currently authenticated user.
+// @Tags Dashboard
 // @Security JWT
-// @Param toast-message query string false "The message to display in the toast notification.""
-// @Param toast-type query string false "The type of the toast notification (e.g., success, error).""
-// @Param hash-value query string false "A hash value used for validation."
 // @Produce html
-// @Router /v1/dashboard/profile [GET]
+// @Router /v1/dashboard [GET]
 func (dr *dashboardRoutes) getDashboardHandler(c *gin.Context) {
 	c.HTML(http.StatusOK, "dashboard.html", gin.H{
 		"title": "Personal Hub",
@@ -52,6 +49,15 @@ func (dr *dashboardRoutes) getDashboardHandler(c *gin.Context) {
 	})
 }
 
+// @Summary Get User Profile
+// @Description Retrieves the profile information for the currently authenticated user.
+// @Tags Dashboard
+// @Security JWT
+// @Param toast-message query string false "The message to display in the toast notification.""
+// @Param toast-type query string false "The type of the toast notification (e.g., success, error).""
+// @Param hash-value query string false "A hash value used for validation."
+// @Produce html
+// @Router /v1/dashboard/profile [GET]
 func (dr *dashboardRoutes) getProfileHandler(c *gin.Context) {
 	username := c.GetString("username")
 

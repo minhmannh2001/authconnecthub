@@ -38,6 +38,8 @@ func NewUserRoutes(handler *gin.RouterGroup,
 
 	h := handler.Group("/user")
 	{
+		h.GET("/change-password", ur.loadChangePasswordPage)
+		h.POST("/change-password", ur.changePasswordHandler)
 		h.POST("/update-user-profile", ur.updateUserProfileHandler)
 		h.POST("/upload-profile-picture", ur.uploadProfilePictureHandler)
 		h.GET("/progress-of-upload-profile-picture", ur.getProgressOfUploadProfilePictureHandler)
@@ -49,6 +51,21 @@ func NewUserRoutes(handler *gin.RouterGroup,
 	}
 }
 
+func (ur *userRoutes) loadChangePasswordPage(c *gin.Context) {
+	c.HTML(http.StatusOK, "change_password.html", gin.H{})
+}
+
+func (ur *userRoutes) changePasswordHandler(c *gin.Context) {
+	c.HTML(http.StatusOK, "change_password.html", gin.H{})
+}
+
+// @Summary Update User Profile
+// @Description Updates the profile information for the currently authenticated user.
+// @Tags User
+// @Security JWT
+// @Consumes json
+// @Produce html
+// @Router /v1/user/update-user-profile [POST]
 func (ur *userRoutes) updateUserProfileHandler(c *gin.Context) {
 	var userProfile dto.UpdateUserProfile
 
@@ -106,6 +123,12 @@ func (ur *userRoutes) updateUserProfileHandler(c *gin.Context) {
 	})
 }
 
+// @Summary Get Profile Picture Upload Progress
+// @Description Retrieves the upload progress for the currently ongoing profile picture upload (if any).
+// @Tags User
+// @Security JWT
+// @Produce html
+// @Router /v1/user/progress-of-upload-profile-picture [GET]
 func (ur *userRoutes) getProgressOfUploadProfilePictureHandler(c *gin.Context) {
 	progress, _ := ur.store.Load(c.GetString("username") + "upload-profile-picture-progress")
 	if progress == nil {
@@ -132,6 +155,14 @@ func (ur *userRoutes) getProgressOfUploadProfilePictureHandler(c *gin.Context) {
 	}
 }
 
+// @Summary Upload Profile Picture
+// @Description Uploads a new profile picture for the currently authenticated user.
+// @Tags User
+// @Security JWT
+// @Consumes multipart/form-data
+// @Param upload-profile-picture-file formData file true "The profile picture file to upload"
+// @Produce html
+// @Router /v1/user/upload-profile-picture [POST]
 func (ur *userRoutes) uploadProfilePictureHandler(c *gin.Context) {
 	c.HTML(http.StatusOK, "upload-profile-picture-modal-done-button", gin.H{})
 
@@ -357,12 +388,6 @@ func (ur *userRoutes) uploadProfilePictureHandler(c *gin.Context) {
 		"type":    "success",
 		"message": successMessage,
 	})
-	// c.HTML(http.StatusOK, "upload-profile-picture-progress-section", gin.H{
-	// 	"fileFormat": filetype[6:],
-	// 	"fileName":   fileHeader.Filename,
-	// 	"failReason": "",
-	// 	"fileSize":   helper.FormatFileSize(float64(fileHeader.Size), 1024.0),
-	// })
 	ur.store.Store(c.GetString("username")+"upload-profile-picture-progress", map[string]interface{}{
 		"fileFormat":          filetype[6:],
 		"fileName":            fileHeader.Filename,
@@ -375,10 +400,25 @@ func (ur *userRoutes) uploadProfilePictureHandler(c *gin.Context) {
 	c.HTML(http.StatusOK, "upload-profile-picture-modal-done-button", gin.H{})
 }
 
+// @Summary Reset Upload Profile Picture Progress Section
+// @Description Resets the upload profile picture progress section on the frontend.
+// @Tags User
+// @Security JWT
+// @Produce html
+// @Response 200 { description: "Upload profile picture progress section reset" }
+// @Router /v1/user/reset-upload-profile-picture-progress-section [GET]
 func (ur *userRoutes) resetUploadProfilePictureProgressSectionHandler(c *gin.Context) {
 	c.HTML(http.StatusOK, "upload-profile-picture-progress-section-wrapper", gin.H{})
 }
 
+// @Summary Delete Profile Picture
+// @Description Deletes the currently authenticated user's profile picture.
+// @Tags User
+// @Security JWT
+// @Produce html
+// @Response 200 { description: "Profile picture deleted successfully" }
+// @Response 400 { description: "Bad Request - Error deleting profile picture" }
+// @Router /v1/user/delete-profile-picture [DELETE]
 func (ur *userRoutes) deleteProfilePictureHandler(c *gin.Context) {
 	c.Header("HX-Reswap", "none")
 	user, _ := ur.userUC.FindByUsernameOrEmail(c.GetString("username"), "")
@@ -411,6 +451,12 @@ func (ur *userRoutes) deleteProfilePictureHandler(c *gin.Context) {
 	})
 }
 
+// @Summary Add Social Account
+// @Description Adds a social media account to the currently authenticated user's profile.
+// @Tags User
+// @Security JWT
+// @Produce html
+// @Router /v1/user/add-social-account [POST]
 func (ur *userRoutes) addSocialAccountHandler(c *gin.Context) {
 	// Define valid account types
 	validAccountTypes := []string{"facebook", "twitter", "github", "youtube"}
@@ -473,6 +519,12 @@ func (ur *userRoutes) addSocialAccountHandler(c *gin.Context) {
 	})
 }
 
+// @Summary Cancel Add Social Account
+// @Description Cancels the process of adding a social media account to the user's profile.
+// @Tags User
+// @Security JWT
+// @Produce html
+// @Router /v1/user/cancel-add-social-account [GET]
 func (ur *userRoutes) cancelAddSocialAccountHandler(c *gin.Context) {
 	accountType := c.Query("type")
 	c.HTML(http.StatusOK, "account-section", entity.SocialAccount{
@@ -482,6 +534,15 @@ func (ur *userRoutes) cancelAddSocialAccountHandler(c *gin.Context) {
 	})
 }
 
+// @Summary Remove Social Account
+// @Description Removes a social media account from the currently authenticated user's profile.
+// @Tags User
+// @Security JWT
+// @Consumes application/x-www-form-urlencoded  // Optional, but can be added for consistency
+// @Param username query string true "Username of the authenticated user"
+// @Param type query string true "The type of social account to remove (e.g., facebook, twitter)"
+// @Produce html
+// @Router /v1/user/remove-social-account [GET]
 func (ur *userRoutes) removeSocialAccountHandler(c *gin.Context) {
 	// Get username and account type from request parameters
 	username := c.GetString("username")
@@ -511,3 +572,4 @@ func (ur *userRoutes) removeSocialAccountHandler(c *gin.Context) {
 
 // https://celery.school/celery-progress-bars-with-fastapi-htmx
 // https://freshman.tech/file-upload-golang/
+// https://medium.com/@relia/an-in-depth-guide-for-using-go-sync-map-with-code-sample-e742814e7bce
